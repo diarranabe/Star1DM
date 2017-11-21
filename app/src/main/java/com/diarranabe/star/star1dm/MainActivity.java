@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
 
     TextView textView;
-    private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td";
+    private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,13 +43,9 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
         textView = findViewById(R.id.texte);
-      //  DatabaseHelper db = new DatabaseHelper(this);
+        //  DatabaseHelper db = new DatabaseHelper(this);
 
-        //String txt = getJSON(testUrl);
-//        textView.setText(populate().get(0).toString());
-
-        String url = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
-        ArrayList<String> result = getJson(url);
+        ArrayList<String> result = getJson(testUrl);
     }
 
 
@@ -59,27 +55,27 @@ public class MainActivity extends AppCompatActivity {
      * @param url
      * @return
      */
-    public ArrayList<String> getJson(String url){
+    public ArrayList<String> getJson(String url) {
         AsyncHttpClient client = new AsyncHttpClient();
-        final ArrayList<String> listResult = new ArrayList<String>() ;
-        client.get(""+url,new JsonHttpResponseHandler() {
+        final ArrayList<String> listResult = new ArrayList<String>();
+        client.get("" + url, new JsonHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
 
                 try {
-                    JSONArray reords =  response.getJSONArray("records") ;
+                    JSONArray reords = response.getJSONArray("records");
 
                     JSONObject object1 = (JSONObject) reords.get(0);
 
                     JSONObject object2 = (JSONObject) object1.get("fields");
 
-                    listResult.add(object2.get("url").toString()) ;
-                    listResult.add(object2.get("id").toString()) ;
+                    listResult.add(object2.get("url").toString());
+                    listResult.add(object2.get("id").toString());
 
                     downZip(object2.get("url").toString());
 
-                    Log.e("XXXX","" + object2.get("url").toString() ) ;
+                    Log.e("XXXX", "" + object2.get("url").toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -90,19 +86,20 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 super.onFailure(statusCode, headers, responseString, throwable);
-                Log.e("XXXX","==> PROBLEME DE CHARGEMENRT <==" ) ;
+                Log.e("XXXX", "==> PROBLEME DE CHARGEMENRT <==");
             }
         });
-        return listResult ;
+        return listResult;
     }
 
 
     /**
      * Permite to download Zip file
+     *
      * @param ursZuip
      */
     public void downZip(String ursZuip) {
-        final String SourceFilname = ""+ursZuip;
+        final String SourceFilname = "" + ursZuip;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
 
@@ -129,7 +126,16 @@ public class MainActivity extends AppCompatActivity {
                     FileOutputStream output = new FileOutputStream(_f);
                     output.write(binaryData);
                     output.close();
-                    Log.e("XXXX" , "" + _f) ;
+                    Log.e("XXXX", "" + _f);
+
+                    // Debut du deziping
+                    String outfile = _f.getAbsolutePath();
+                    outfile = outfile.replace(".zip", "");
+                    Log.e("XXXX", "==> " + outfile);
+
+                    // decropress file in folder whith id name
+                    DecompressFast df = new DecompressFast(_f.getAbsolutePath(), outfile + "/");
+                    df.unzip();
 
 
                 } catch (IOException e) {
@@ -140,19 +146,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgress(long bytesWritten, long totalSize) {
                 super.onProgress(bytesWritten, totalSize);
-                int val = (int) ((bytesWritten*100)/totalSize);
+                int val = (int) ((bytesWritten * 100) / totalSize);
                 mProgressDialog.setProgress(val);
 
-
-              /*  while ((len1 = in.read(buffer)) > 0) {
-                    total += len1; //total = total + len1
-                    publishProgress(“” + (int)((total*100)/lenghtOfFile));
-                    f.write(buffer, 0, len1);
-                }*/
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] binaryData, Throwable error) {
+                Log.e("XXXX", "==> " + error);
 
             }
 
@@ -165,7 +166,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static String[] PERMISSIONS_STORAGE = {
@@ -173,7 +173,10 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
 
-    //persmission method.
+    /**
+     *  Methode to get permision to user .
+     * @param activity
+     */
     public static void verifyStoragePermissions(Activity activity) {
         // Check if we have read or write permission
         int writePermission = ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE);
@@ -190,8 +193,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-    //our progress bar settings
+    /**
+     * Progresse Bar
+     * @param id
+     * @return
+     */
     @Override
     protected ProgressDialog onCreateDialog(int id) {
         switch (id) {
