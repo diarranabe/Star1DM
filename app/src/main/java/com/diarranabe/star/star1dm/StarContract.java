@@ -94,4 +94,14 @@ public interface StarContract {
             String END_DATE = "end_date";
         }
     }
+
+    interface RouteDetails {
+        String CONTENT_PATH = "routedetail";
+        Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
+        // select stop.stop_name, stop_time.arrival_time
+        String CONTENT_TYPE =
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.routedetails";
+        String CONTENT_ITEM_TYPE =
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.routedetails";
+    }
 }

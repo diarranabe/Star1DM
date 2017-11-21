@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -27,8 +29,6 @@ import tables.StopeTimes;
  */
 
 public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
-
-
 
     private SQLiteDatabase database;
     private static  String DATA_NAME ="starBus";
@@ -60,7 +60,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
             }while (cursor.moveToNext());
         }
 
-
         Log.d("XXXX","db cretaed");
     }
 
@@ -75,7 +74,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
         onCreate(db);
     }
 
-    public void insertBusRoutes( BusRoute busRoutes)
+    public void insertBusRoute(BusRoute busRoutes)
     {
         database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -166,4 +165,63 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
 
 
 
+    public ArrayList<tables.Calendar> loadCalendarData() throws IOException {
+        ArrayList<tables.Calendar> calendars = new ArrayList<>();
+        FileReader file = new FileReader("calendarFileName");
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        while ((line = buffer.readLine()) != null) {
+            String[] str = line.split(",");
+            calendars.add(new tables.Calendar(str[0],str[1],str[2],str[3],str[4],str[5],str[6],str[7],str[8]));
+        }
+        return calendars;
+    }
+
+    public ArrayList<tables.BusRoute> loadBusRoutesData() throws IOException {
+        ArrayList<tables.BusRoute> busRoutes = new ArrayList<>();
+        FileReader file = new FileReader("busRoutesFileName");
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        while ((line = buffer.readLine()) != null) {
+            String[] str = line.split(",");
+            busRoutes.add(new tables.BusRoute(str[0],str[1],str[2],str[3],str[4],str[5]));
+        }
+        return busRoutes;
+    }
+
+    public ArrayList<tables.Stop> loadStopsData() throws IOException {
+        ArrayList<tables.Stop> stops = new ArrayList<>();
+        FileReader file = new FileReader("stopsFileName");
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        while ((line = buffer.readLine()) != null) {
+            String[] str = line.split(",");
+            stops.add(new tables.Stop(str[0],str[1],Float.valueOf(str[2]),Float.valueOf(str[3]),str[4]));
+        }
+        return stops;
+    }
+
+    public ArrayList<tables.StopeTimes> loadStopTimesData() throws IOException {
+        ArrayList<tables.StopeTimes> stopeTimes = new ArrayList<>();
+        FileReader file = new FileReader("stopTimesFileName");
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        while ((line = buffer.readLine()) != null) {
+            String[] str = line.split(",");
+            stopeTimes.add(new tables.StopeTimes(Integer.valueOf(str[0]),str[1],str[2],Integer.valueOf(str[3]),str[4]));
+        }
+        return stopeTimes;
+    }
+
+    public ArrayList<tables.Trips> loadTripsData() throws IOException {
+        ArrayList<tables.Trips> trips = new ArrayList<>();
+        FileReader file = new FileReader("tripsFileName");
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        while ((line = buffer.readLine()) != null) {
+            String[] str = line.split(",");
+            trips.add(new tables.Trips(Integer.valueOf(str[0]),Integer.valueOf(str[1]),str[2],Integer.valueOf(str[3]),Integer.valueOf(str[4]),str[5]));
+        }
+        return trips;
+    }
 }
