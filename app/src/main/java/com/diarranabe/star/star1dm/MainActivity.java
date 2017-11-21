@@ -33,6 +33,9 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog mProgressDialog;
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
 
+    //Absolu path whre file are unZip
+    private String exportPath = "" ;
+
     TextView textView;
     private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 
@@ -129,12 +132,14 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("XXXX", "" + _f);
 
                     // Debut du deziping
-                    String outfile = _f.getAbsolutePath();
-                    outfile = outfile.replace(".zip", "");
-                    Log.e("XXXX", "==> " + outfile);
+                    exportPath = _f.getAbsolutePath();
+                    exportPath = exportPath.replace(".zip", "");
+                    Log.e("XXXX", "==> " + exportPath);
+
+                    exportPath = exportPath + "/" ;
 
                     // decropress file in folder whith id name
-                    DecompressFast df = new DecompressFast(_f.getAbsolutePath(), outfile + "/");
+                    DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
                     df.unzip();
 
 
