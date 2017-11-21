@@ -32,7 +32,7 @@ public class DecompressFast {
             ZipInputStream zin = new ZipInputStream(fin);
             ZipEntry ze = null;
             while ((ze = zin.getNextEntry()) != null) {
-                Log.v("Decompress", "Unzipping " + ze.getName());
+                Log.v("XXXXDecompress", "Unzipping " + ze.getName());
 
                 if (ze.isDirectory()) {
                     _dirChecker(ze.getName());
@@ -56,11 +56,11 @@ public class DecompressFast {
             zin.close();
 
 
-            Log.d("Unzip", "Unzipping complete. path :  " + _location);
+            Log.d("XXXXUnzip", "Unzipping complete. path :  " + _location);
         } catch (Exception e) {
-            Log.e("Decompress", "unzip", e);
+            Log.e("XXXXDecompress", "unzip", e);
 
-            Log.d("Unzip", "Unzipping failed");
+            Log.d("XXXXUnzip", "Unzipping failed");
         }
 
     }

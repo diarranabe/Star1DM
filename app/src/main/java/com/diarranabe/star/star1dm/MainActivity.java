@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] binaryData, Throwable error) {
+
                 Log.e("XXXX", "==> " + error);
 
             }
