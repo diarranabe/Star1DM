@@ -1,26 +1,20 @@
 package com.diarranabe.star.star1dm;
 
-import android.content.Context;
-import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HttpContext;
+import com.loopj.android.http.AsyncHttpClient;
+import com.loopj.android.http.JsonHttpResponseHandler;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import cz.msebera.android.httpclient.Header;
+
 import java.util.ArrayList;
-import java.util.List;
-
-import java.io.BufferedReader;
 
 
 
@@ -38,7 +32,41 @@ TextView textView;
 
         //String txt = getJSON(testUrl);
 //        textView.setText(populate().get(0).toString());
+
+        String url = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+        getJson(url);
+
         Log.d("XXXX","end");
+    }
+
+
+
+    public ArrayList<String> getJson(String url){
+        AsyncHttpClient client = new AsyncHttpClient();
+        final ArrayList<String> listResult = new ArrayList<String>() ;
+        client.get(""+url,new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                try {
+                    JSONArray reords =  response.getJSONArray("records") ;
+
+                    JSONObject object1 = (JSONObject) reords.get(0);
+
+                    JSONObject object2 = (JSONObject) object1.get("fields");
+
+                    listResult.add(object2.get("url").toString()) ;
+                    listResult.add(object2.get("id").toString()) ;
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //Json object is returned as a response
+            }
+        });
+        return listResult ;
     }
 
 
