@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Star1DM.iml" filepath="$PROJECT_DIR$/Star1DM.iml" />
-      <module fileurl="file://H:\MIAGE_RENNES\MOB\tp3\Star1DM\Star1DM.iml" filepath="H:\MIAGE_RENNES\MOB\tp3\Star1DM\Star1DM.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
-      <module fileurl="file://H:\MIAGE_RENNES\MOB\tp3\Star1DM\app\app.iml" filepath="H:\MIAGE_RENNES\MOB\tp3\Star1DM\app\app.iml" />
     </modules>
   </component>
 </project>
