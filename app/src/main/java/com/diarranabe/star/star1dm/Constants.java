@@ -18,7 +18,7 @@ public class Constants implements StarContract {
             Trips.TripColumns.SERVICE_ID+" INTEGER,"+
             Trips.TripColumns.HEADSIGN+" TEXT,"+
             Trips.TripColumns.DIRECTION_ID+" INTEGER,"+
-            Trips.TripColumns.BLOCK_ID+" INTEGER,"+
+            Trips.TripColumns.BLOCK_ID+" TEXT,"+
             Trips.TripColumns.WHEELCHAIR_ACCESSIBLE+" TEXT );";
 
 

@@ -4,6 +4,8 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
@@ -29,6 +31,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import static android.system.Os.close;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,6 +51,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
+        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
+        SQLiteDatabase db = databaseHelper.getReadableDatabase();
+        //databaseHelper.onCreate(db);
+
+        Cursor cursor = null;
+        try {
+            db = databaseHelper.getReadableDatabase();
+            databaseHelper.onCreate(db);
+            databaseHelper.insertStops();
+
+        } finally {
+
+        }
 /*
 
         Log.e("XXXX","Downlod zip");
@@ -54,15 +71,15 @@ public class MainActivity extends AppCompatActivity {
         Log.e("XXXX","Downlod zip");
 */
 
-        try {
+       /* try {
             ArrayList<tables.Calendar> ca = DatabaseHelper.loadCalendarData("calendar.txt");
             ArrayList<tables.BusRoute> br = DatabaseHelper.loadBusRoutesData("routes.txt");
             ArrayList<tables.Stop> stops = DatabaseHelper.loadStopsData("stops.txt");
-//            ArrayList<tables.StopeTimes> stopsTimes = DatabaseHelper.loadStopTimesData("stop_times.txt");
+//            ArrayList<tables.StopTime> stopsTimes = DatabaseHelper.loadStopTimesData("stop_times.txt");
             ArrayList<tables.Trips> trips = DatabaseHelper.loadTripsData("trips.txt");
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
        /* File fil = new File(Environment.getExternalStorageDirectory(),"agency.txt");
         FileReader file = null;
         try {

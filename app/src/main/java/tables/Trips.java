@@ -10,10 +10,10 @@ public class Trips {
     private int serviceId;
     private String headSign;
     private  int directionId;
-    private int blockId;
+    private String blockId;
     private String wheelchairAccessible;
 
-    public Trips(int routeId, int serviceId, String headSign, int directionId, int blockId, String wheelchairAccessible) {
+    public Trips(int routeId, int serviceId, String headSign, int directionId, String blockId, String wheelchairAccessible) {
         RouteId = routeId;
         this.serviceId = serviceId;
         this.headSign = headSign;
@@ -54,11 +54,11 @@ public class Trips {
         this.directionId = directionId;
     }
 
-    public int getBlockId() {
+    public String getBlockId() {
         return blockId;
     }
 
-    public void setBlockId(int blockId) {
+    public void setBlockId(String blockId) {
         this.blockId = blockId;
     }
 

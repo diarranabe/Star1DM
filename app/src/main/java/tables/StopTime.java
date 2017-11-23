@@ -4,7 +4,7 @@ package tables;
  * Created by diarranabe on 20/11/2017.
  */
 
-public class StopeTimes {
+public class StopTime {
 
     private int tripId;
     private String arrivalTime;
@@ -12,7 +12,7 @@ public class StopeTimes {
     private int stopId;
     private String StopSequence;
 
-    public StopeTimes(int tripId, String arrivalTime, String departureTme, int stopId, String stopSequence) {
+    public StopTime(int tripId, String arrivalTime, String departureTme, int stopId, String stopSequence) {
         this.tripId = tripId;
         this.arrivalTime = arrivalTime;
         this.departureTme = departureTme;
@@ -62,7 +62,7 @@ public class StopeTimes {
 
     @Override
     public String toString() {
-        return "StopeTimes{" +
+        return "StopTime{" +
                 "tripId=" + tripId +
                 ", arrivalTime='" + arrivalTime + '\'' +
                 ", departureTme='" + departureTme + '\'' +
