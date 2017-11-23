@@ -21,8 +21,11 @@ import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -36,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     //Absolu path whre file are unZip
     private String exportPath = "" ;
 
-    TextView textView;
     private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 
     @Override
@@ -45,54 +47,43 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
-        textView = findViewById(R.id.texte);
-        //  DatabaseHelper db = new DatabaseHelper(this);
+/*
 
-        ArrayList<String> result = getJson(testUrl);
-    }
+        Log.e("XXXX","Downlod zip");
+        downZip("https://data.opendatasoft.com/explore/dataset/tco-busmetro-horaires-gtfs-versions-td@keolis-rennes/files/b26bfe4a51cc73721585d61b740cf04e/download/");
+        Log.e("XXXX","Downlod zip");
+*/
 
+        try {
+            ArrayList<tables.Calendar> ca = DatabaseHelper.loadCalendarData("calendar.txt");
+            ArrayList<tables.BusRoute> br = DatabaseHelper.loadBusRoutesData("routes.txt");
+            ArrayList<tables.Stop> stops = DatabaseHelper.loadStopsData("stops.txt");
+//            ArrayList<tables.StopeTimes> stopsTimes = DatabaseHelper.loadStopTimesData("stop_times.txt");
+            ArrayList<tables.Trips> trips = DatabaseHelper.loadTripsData("trips.txt");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+       /* File fil = new File(Environment.getExternalStorageDirectory(),"agency.txt");
+        FileReader file = null;
+        try {
+            Log.d("XXXX","load start : ");
+            file = new FileReader(fil);
+        } catch (FileNotFoundException e) {
+            Log.d("XXXX","load fail : ");
 
-    /**
-     * connexion to Star Api to get url of zip and id of traject
-     *
-     * @param url
-     * @return
-     */
-    public ArrayList<String> getJson(String url) {
-        AsyncHttpClient client = new AsyncHttpClient();
-        final ArrayList<String> listResult = new ArrayList<String>();
-        client.get("" + url, new JsonHttpResponseHandler() {
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-
-                try {
-                    JSONArray reords = response.getJSONArray("records");
-
-                    JSONObject object1 = (JSONObject) reords.get(0);
-
-                    JSONObject object2 = (JSONObject) object1.get("fields");
-
-                    listResult.add(object2.get("url").toString());
-                    listResult.add(object2.get("id").toString());
-
-                    downZip(object2.get("url").toString());
-
-                    Log.e("XXXX", "" + object2.get("url").toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-
-                //Json object is returned as a response
+            e.printStackTrace();
+        }
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        try {
+            while ((line = buffer.readLine()) != null) {
+                Log.d("XXXX","content : "+line);
             }
+        } catch (IOException e) {
+            Log.d("XXXX","show exception : ");
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                super.onFailure(statusCode, headers, responseString, throwable);
-                Log.e("XXXX", "==> PROBLEME DE CHARGEMENRT <==");
-            }
-        });
-        return listResult;
+            e.printStackTrace();
+        }*/
     }
 
 
@@ -119,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
 
+                Log.e("XXXX", "success start");
 
                 try {
 
@@ -126,7 +118,14 @@ public class MainActivity extends AppCompatActivity {
                     String DestinationName = SourceFilname.substring(SourceFilname.lastIndexOf('/') + 1, SourceFilname.length());
                     //Saving a File into Download Folder
                     File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
-                    FileOutputStream output = new FileOutputStream(_f);
+
+
+                    Log.e("XXXX", "success before crash");
+
+                    FileOutputStream output = new FileOutputStream(_f);// Stopped here
+
+
+                    Log.e("XXXX", "success try");
                     output.write(binaryData);
                     output.close();
                     Log.e("XXXX", "" + _f);
@@ -144,6 +143,8 @@ public class MainActivity extends AppCompatActivity {
 
 
                 } catch (IOException e) {
+                    Log.e("XXXX", "success catch");
+
                     e.printStackTrace();
                 }
             }
@@ -152,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProgress(long bytesWritten, long totalSize) {
                 super.onProgress(bytesWritten, totalSize);
                 int val = (int) ((bytesWritten * 100) / totalSize);
+                Log.d("XXXX", "downloading ..... "+val);
                 mProgressDialog.setProgress(val);
 
             }

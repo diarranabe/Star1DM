@@ -8,20 +8,17 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.net.ssl.HttpsURLConnection;
 
 import tables.BusRoute;
 import tables.Stop;
 import tables.StopeTimes;
+
+import static android.os.Environment.getExternalStorageDirectory;
 
 
 /**
@@ -30,6 +27,7 @@ import tables.StopeTimes;
 
 public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
 
+    private static final String INIT_FOLDER_PATH = "star1dm/";
     private SQLiteDatabase database;
     private static  String DATA_NAME ="starBus";
     private static final int DATA_BASE_VERSION = 1;
@@ -53,14 +51,14 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
         Cursor cursor = db.rawQuery("select * from "+ Stops.CONTENT_PATH,null);
         if(cursor.moveToFirst()){
             do {
-                Log.d("XXXX","stop "+ cursor.getString(0));
-                Log.d("XXXX","stop "+ cursor.getString(1));
-                Log.d("XXXX","stop "+ cursor.getString(2));
-                Log.d("XXXX","stop "+ cursor.getString(3));
+                Log.d("STARX","stop "+ cursor.getString(0));
+                Log.d("STARX","stop "+ cursor.getString(1));
+                Log.d("STARX","stop "+ cursor.getString(2));
+                Log.d("STARX","stop "+ cursor.getString(3));
             }while (cursor.moveToNext());
         }
 
-        Log.d("XXXX","db cretaed");
+        Log.d("STARX","db cretaed");
     }
 
     @Override
@@ -113,12 +111,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     }
 
 
-    public static final String DATABASE_CREATE_TABLE_STOP_TIMES = "CREATE TABLE IF NOT EXISTS"+ StarContract.StopTimes.CONTENT_PATH +
-            "("+ StarContract.StopTimes.StopTimeColumns.TRIP_ID + " INTEGER NOT NULL PRIMARY KEY, "+
-            StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME+", TEXT"+
-            StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME+", TEXT "+
-            StarContract.StopTimes.StopTimeColumns.STOP_ID+", INTEGER"+
-            StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE+", TEXT );";
     public void insertStopTimes(StopeTimes stopTimes)
     {
         database = this.getWritableDatabase();
@@ -165,63 +157,127 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
 
 
 
-    public ArrayList<tables.Calendar> loadCalendarData() throws IOException {
+    public static ArrayList<tables.Calendar> loadCalendarData(String path) throws IOException {
+        Log.d("STARXC","start loading... "+path);
         ArrayList<tables.Calendar> calendars = new ArrayList<>();
-        FileReader file = new FileReader("calendarFileName");
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
+        int i =0;
         while ((line = buffer.readLine()) != null) {
-            String[] str = line.split(",");
-            calendars.add(new tables.Calendar(str[0],str[1],str[2],str[3],str[4],str[5],str[6],str[7],str[8]));
+            if (i!=0){
+                String[] str = line.split(",");
+                tables.Calendar calendar = new tables.Calendar(str[0],str[1],str[2],str[3],str[4],str[5],str[6],str[7],str[8]);
+                calendars.add(calendar);
+                Log.d("STARXC","loaded... "+calendar.toString());
+            }
+            i++;
         }
+        Log.d("STARXC",i+" calendars loaded");
         return calendars;
     }
 
-    public ArrayList<tables.BusRoute> loadBusRoutesData() throws IOException {
+    public static ArrayList<tables.BusRoute> loadBusRoutesData(String path) throws IOException {
+        Log.d("STARXBR","start loading... "+path);
         ArrayList<tables.BusRoute> busRoutes = new ArrayList<>();
-        FileReader file = new FileReader("busRoutesFileName");
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
+        int i=0;
         while ((line = buffer.readLine()) != null) {
-            String[] str = line.split(",");
-            busRoutes.add(new tables.BusRoute(str[0],str[1],str[2],str[3],str[4],str[5]));
+            if (i !=0){
+                String[] str = line.split(",");
+                tables.BusRoute br = new tables.BusRoute(str[0],str[1],str[2],str[3],str[4],str[5]);
+                busRoutes.add(br);
+                Log.d("STARXBR","loaded... "+br.toString());
+            }
+            i++;
         }
+        Log.d("STARXBR",i+" busRoutes loaded");
         return busRoutes;
     }
 
-    public ArrayList<tables.Stop> loadStopsData() throws IOException {
+    public static ArrayList<tables.Stop> loadStopsData(String path) throws IOException {
+        Log.d("STARXS","start loading... "+path);
         ArrayList<tables.Stop> stops = new ArrayList<>();
-        FileReader file = new FileReader("stopsFileName");
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
+        int i=0;
         while ((line = buffer.readLine()) != null) {
-            String[] str = line.split(",");
-            stops.add(new tables.Stop(str[0],str[1],Float.valueOf(str[2]),Float.valueOf(str[3]),str[4]));
+            if (i !=0){
+                String[] str = line.split(",");
+                String name = str[2];
+                String description = str[3];
+                float latitude = Float.valueOf(str[4].replace('"', ' '));
+                float longitude = Float.valueOf(str[5].replace('"', ' '));
+                String wheelChairBoalding = str[11];
+                tables.Stop stop = new tables.Stop(name,description,latitude,longitude,wheelChairBoalding);
+                stops.add(stop);
+                Log.d("STARXS","loaded... "+stop.toString());
+            }
+            i++;
         }
+        Log.d("STARXS",i+" stops loaded");
         return stops;
     }
 
-    public ArrayList<tables.StopeTimes> loadStopTimesData() throws IOException {
+    public static ArrayList<tables.StopeTimes> loadStopTimesData(String path) throws IOException {
+        Log.d("STARXST","start loading... "+path);
         ArrayList<tables.StopeTimes> stopeTimes = new ArrayList<>();
-        FileReader file = new FileReader("stopTimesFileName");
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
+        int i = 0;
         while ((line = buffer.readLine()) != null) {
-            String[] str = line.split(",");
-            stopeTimes.add(new tables.StopeTimes(Integer.valueOf(str[0]),str[1],str[2],Integer.valueOf(str[3]),str[4]));
-        }
+            if (i!=0){
+                String[] str = line.split(",");
+                int tripId = Integer.valueOf(str[0].replaceAll("\"", ""));
+                int stopId = Integer.valueOf(str[3].replaceAll("\"", ""));
+                tables.StopeTimes stopeTime = new tables.StopeTimes(tripId,str[1],str[2],stopId,str[4]);
+                stopeTimes.add(stopeTime);
+                Log.d("STARXST","loaded... "+stopeTime.toString());
+            }
+            i++;
+             }
+        Log.d("STARXST",i+" stopTimes loaded");
         return stopeTimes;
     }
 
-    public ArrayList<tables.Trips> loadTripsData() throws IOException {
+    public static ArrayList<tables.Trips> loadTripsData(String path) throws IOException {
+        Log.d("STARXT","start loading... "+path);
         ArrayList<tables.Trips> trips = new ArrayList<>();
-        FileReader file = new FileReader("tripsFileName");
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
+        int i = 0;
+
         while ((line = buffer.readLine()) != null) {
-            String[] str = line.split(",");
-            trips.add(new tables.Trips(Integer.valueOf(str[0]),Integer.valueOf(str[1]),str[2],Integer.valueOf(str[3]),Integer.valueOf(str[4]),str[5]));
+            if (i!=0){
+                String[] str = line.split(",");
+                Log.d("STARXT","start loading... "+line);
+                //int routeId, int serviceId,       String headSign,               int directionId, int blockId,       String wheelchairAccessible) {
+                //route_id,    service_id,  trip_id,trip_headsign,  trip_short_name,direction_id,   block_id,  shape_id,wheelchair_accessible,bikes_allowed
+                int routeId = Integer.valueOf(str[0].replaceAll("\"", ""));
+                int serviceId = Integer.valueOf(str[1].replaceAll("\"", ""));
+                int direction = Integer.valueOf(str[5].replaceAll("\"", ""));
+                Log.d("STARXT","stp^lm:... "+routeId+","+serviceId+","+direction+","+
+                        Float.valueOf(str[6].replaceAll("\"","")));
+
+                int block = Integer.valueOf(str[6].replaceAll("\"", ""));
+                tables.Trips trip = new tables.Trips(routeId,
+                        serviceId,
+                        str[3],
+                        direction,
+                        block,
+                        str[8]);
+                Log.d("STARXT","start loading... ");
+                trips.add(trip);
+                Log.d("STARXT","loaded... "+trip.toString());
+            }
+            i++;
         }
+        Log.d("STARXT",i+" trips loaded");
         return trips;
     }
 }

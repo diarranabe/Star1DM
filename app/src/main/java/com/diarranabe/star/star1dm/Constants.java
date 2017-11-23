@@ -37,6 +37,7 @@ public class Constants implements StarContract {
             StarContract.StopTimes.StopTimeColumns.STOP_ID+" INTEGER,"+
             StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE+" TEXT );";
 
+
     public static final String CREATE_CALENDAR_TABLE = "CREATE TABLE IF NOT EXISTS "+ Calendar.CONTENT_PATH +
             "("+ Calendar.CalendarColumns.MONDAY + " TEXT , "+
             Calendar.CalendarColumns.TUESDAY+" TEXT,"+
