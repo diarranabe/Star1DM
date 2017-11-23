@@ -51,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
+        getJson(testUrl);
+
+
         DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
         //databaseHelper.onCreate(db);
@@ -64,44 +67,54 @@ public class MainActivity extends AppCompatActivity {
         } finally {
 
         }
-/*
 
-        Log.e("XXXX","Downlod zip");
-        downZip("https://data.opendatasoft.com/explore/dataset/tco-busmetro-horaires-gtfs-versions-td@keolis-rennes/files/b26bfe4a51cc73721585d61b740cf04e/download/");
-        Log.e("XXXX","Downlod zip");
-*/
-
-       /* try {
-            ArrayList<tables.Calendar> ca = DatabaseHelper.loadCalendarData("calendar.txt");
-            ArrayList<tables.BusRoute> br = DatabaseHelper.loadBusRoutesData("routes.txt");
-            ArrayList<tables.Stop> stops = DatabaseHelper.loadStopsData("stops.txt");
-//            ArrayList<tables.StopTime> stopsTimes = DatabaseHelper.loadStopTimesData("stop_times.txt");
-            ArrayList<tables.Trips> trips = DatabaseHelper.loadTripsData("trips.txt");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-       /* File fil = new File(Environment.getExternalStorageDirectory(),"agency.txt");
-        FileReader file = null;
-        try {
-            Log.d("XXXX","load start : ");
-            file = new FileReader(fil);
-        } catch (FileNotFoundException e) {
-            Log.d("XXXX","load fail : ");
-
-            e.printStackTrace();
-        }
-        BufferedReader buffer = new BufferedReader(file);
-        String line = "";
-        try {
-            while ((line = buffer.readLine()) != null) {
-                Log.d("XXXX","content : "+line);
-            }
-        } catch (IOException e) {
-            Log.d("XXXX","show exception : ");
-
-            e.printStackTrace();
-        }*/
     }
+
+    /**
+     * connexion to Star Api to get url of zip and id of traject
+     *
+     * @param url
+     * @return
+     */
+    public void getJson(String url) {
+        AsyncHttpClient client = new AsyncHttpClient();
+        final ArrayList<String> listResult = new ArrayList<String>();
+        client.get("" + url, new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                try {
+                    JSONArray reords = response.getJSONArray("records");
+
+                    JSONObject object1 = (JSONObject) reords.get(0);
+
+                    JSONObject object2 = (JSONObject) object1.get("fields");
+
+                    listResult.add(object2.get("url").toString());
+                    listResult.add(object2.get("id").toString());
+
+                    downZip(object2.get("url").toString());
+
+                    Log.e("XXXX", "" + object2.get("url").toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //Json object is returned as a response
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                Log.e("XXXX", "==> PROBLEME DE CHARGEMENRT <==");
+            }
+        });
+
+    }
+
+
+
 
 
     /**
@@ -135,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
                     String DestinationName = SourceFilname.substring(SourceFilname.lastIndexOf('/') + 1, SourceFilname.length());
                     //Saving a File into Download Folder
                     File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
+
+                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName+"/"  ;
 
 
                     Log.e("XXXX", "success before crash");

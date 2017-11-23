@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -34,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     /**
      * Paths used to load csv files
      */
-    private static final String INIT_FOLDER_PATH = "star1dm/"; // From the root folder of the device
+    public static  String INIT_FOLDER_PATH = "star1dm/"; // From the root folder of the device
     private static  String CALENDAR_CSV_FILE ="calendar.txt";
     private static  String BUS_ROUTES_CSV_FILE ="routes.txt";
     private static  String STOPS_CSV_FILE ="stops.txt";
@@ -173,6 +174,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
         values.put(Stops.StopColumns.LONGITUDE, stop.getLongitude());
         values.put(Stops.StopColumns.WHEELCHAIR_BOARDING, stop.getWheelChairBoalding());
         database.insert(Stops.CONTENT_PATH,null, values);
+        Log.e("XXXX", "insertion OK") ;
     }
 
     /**
@@ -318,6 +320,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
         Log.d("STARXS","start loading... "+path);
         ArrayList<tables.Stop> stops = new ArrayList<>();
         FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
+        Log.e("STARXS", " Absolut Path for file" + file.toString()) ;
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i=0;
@@ -376,7 +379,8 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     public static ArrayList<tables.Trips> loadTripsData(String path) throws IOException {
         Log.d("STARXT","start loading... "+path);
         ArrayList<tables.Trips> trips = new ArrayList<>();
-        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
+     //   FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
+        FileReader file = new FileReader(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
