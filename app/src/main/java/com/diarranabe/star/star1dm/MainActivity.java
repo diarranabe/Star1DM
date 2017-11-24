@@ -60,9 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
         Cursor cursor = null;
         try {
-            db = databaseHelper.getReadableDatabase();
-            databaseHelper.onCreate(db);
-            databaseHelper.insertStops();
+        //    db = databaseHelper.getReadableDatabase();
+        //    databaseHelper.onCreate(db);
+       //     databaseHelper.insertStops();
 
         } finally {
 
@@ -147,9 +147,9 @@ public class MainActivity extends AppCompatActivity {
                     //Splitting a File Name from SourceFileName
                     String DestinationName = SourceFilname.substring(SourceFilname.lastIndexOf('/') + 1, SourceFilname.length());
                     //Saving a File into Download Folder
-                    File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
+                    File _f = new File(Environment.getExternalStorageDirectory(), DestinationName);
 
-                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName+"/"  ;
+                   //DatabaseHelper.INIT_FOLDER_PATH = DestinationName+"/"  ;
 
 
                     Log.e("XXXX", "success before crash");
@@ -161,13 +161,14 @@ public class MainActivity extends AppCompatActivity {
                     output.write(binaryData);
                     output.close();
                     Log.e("XXXX", "" + _f);
+                 //   Log.e("XXXX", " --> " + Environment.getExternalStorageDirectory()+"/" +DatabaseHelper.INIT_FOLDER_PATH);
 
                     // Debut du deziping
-                    exportPath = _f.getAbsolutePath();
-                    exportPath = exportPath.replace(".zip", "");
+                    exportPath = Environment.getExternalStorageDirectory()+"/" +DatabaseHelper.INIT_FOLDER_PATH;
+                  //  exportPath = exportPath.replace(".zip", "");
                     Log.e("XXXX", "==> " + exportPath);
 
-                    exportPath = exportPath + "/" ;
+                //    exportPath = exportPath + "/" ;
 
                     // decropress file in folder whith id name
                     DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
