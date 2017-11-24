@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Environment;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -34,7 +35,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     /**
      * Paths used to load csv files
      */
-    private static final String INIT_FOLDER_PATH = "star1dm/"; // From the root folder of the device
+    public static  String INIT_FOLDER_PATH = "star1dm/"; // From the root folder of the device
     private static  String CALENDAR_CSV_FILE ="calendar.txt";
     private static  String BUS_ROUTES_CSV_FILE ="routes.txt";
     private static  String STOPS_CSV_FILE ="stops.txt";
@@ -44,8 +45,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
 
     public DatabaseHelper(Context context) {
         super(context, DATA_NAME, null, DATA_BASE_VERSION);
-//        database = getReadableDatabase();
-//        onCreate(database);
     }
 
     @Override
@@ -120,14 +119,15 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
      * Insert all BusRoute from the csv file to the db
      */
     public void insertBusRoutes(){
-        ArrayList<tables.BusRoute> busRoutes = new ArrayList<tables.BusRoute>();
+        ArrayList<tables.BusRoute> items = new ArrayList<tables.BusRoute>();
         try {
-            busRoutes = loadBusRoutesData(BUS_ROUTES_CSV_FILE);
+            items = loadBusRoutesData(BUS_ROUTES_CSV_FILE);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (tables.BusRoute busRoute : busRoutes){
-            insertRoute(busRoute);
+        for (tables.BusRoute item : items){
+            Log.d("STARX","Inserting ...."+item.toString());
+            insertRoute(item);
         }
     }
 
@@ -155,6 +155,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
             e.printStackTrace();
         }
         for (tables.Trips item : items){
+            Log.d("STARX","Inserting ...."+item.toString());
             insertTrip(item);
         }
     }
@@ -186,6 +187,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
             e.printStackTrace();
         }
         for (tables.Stop item : items){
+            Log.d("STARX","Inserting ...."+item.toString());
             insertStop(item);
         }
     }
@@ -217,6 +219,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
             e.printStackTrace();
         }
         for (StopTime item : items){
+            Log.d("STARX","Inserting ...."+item.toString());
             insertStopTime(item);
         }
     }
@@ -252,6 +255,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
             e.printStackTrace();
         }
         for (tables.Calendar item : items){
+            Log.d("STARX","Inserting ...."+item.toString());
             insertCalendar(item);
         }
     }
@@ -317,6 +321,8 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     public static ArrayList<tables.Stop> loadStopsData(String path) throws IOException {
         Log.d("STARXS","start loading... "+path);
         ArrayList<tables.Stop> stops = new ArrayList<>();
+        FileReader file0 = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
+//        FileReader file = new FileReader(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),INIT_FOLDER_PATH +path));
         FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";

@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     //Absolu path whre file are unZip
     private String exportPath = "" ;
 
-    private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+    private String testUrl = "http://ftp.keolis-rennes.com/opendata/tco-busmetro-horaires-gtfs-versions-td/attachments/GTFS_2017.3.0_2017-11-06_2017-12-03.zip";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,22 +53,25 @@ public class MainActivity extends AppCompatActivity {
         verifyStoragePermissions(this);
         DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
         SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        //databaseHelper.onCreate(db);
+        databaseHelper.insertStops();
+        databaseHelper.insertBusRoutes();
+        databaseHelper.insertCalendars();
+        downZip(testUrl);
 
         Cursor cursor = null;
         try {
-            db = databaseHelper.getReadableDatabase();
-            databaseHelper.onCreate(db);
-            databaseHelper.insertStops();
+           // db = databaseHelper.getReadableDatabase();
+            //databaseHelper.onCreate(db);
+           // databaseHelper.insertStops();
 
         } finally {
 
         }
 /*
 
-        Log.e("XXXX","Downlod zip");
+        Log.e("STARX","Downlod zip");
         downZip("https://data.opendatasoft.com/explore/dataset/tco-busmetro-horaires-gtfs-versions-td@keolis-rennes/files/b26bfe4a51cc73721585d61b740cf04e/download/");
-        Log.e("XXXX","Downlod zip");
+        Log.e("STARX","Downlod zip");
 */
 
        /* try {
@@ -83,10 +86,10 @@ public class MainActivity extends AppCompatActivity {
        /* File fil = new File(Environment.getExternalStorageDirectory(),"agency.txt");
         FileReader file = null;
         try {
-            Log.d("XXXX","load start : ");
+            Log.d("STARX","load start : ");
             file = new FileReader(fil);
         } catch (FileNotFoundException e) {
-            Log.d("XXXX","load fail : ");
+            Log.d("STARX","load fail : ");
 
             e.printStackTrace();
         }
@@ -94,10 +97,10 @@ public class MainActivity extends AppCompatActivity {
         String line = "";
         try {
             while ((line = buffer.readLine()) != null) {
-                Log.d("XXXX","content : "+line);
+                Log.d("STARX","content : "+line);
             }
         } catch (IOException e) {
-            Log.d("XXXX","show exception : ");
+            Log.d("STARX","show exception : ");
 
             e.printStackTrace();
         }*/
@@ -107,16 +110,16 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Permite to download Zip file
      *
-     * @param ursZuip
+     * @param zipFileUrl
      */
-    public void downZip(String ursZuip) {
-        final String SourceFilname = "" + ursZuip;
+    public void downZip(String zipFileUrl) {
+        final String sourceFilname = "" + zipFileUrl;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
 
                 "application/zip"
         };
-        client.get(SourceFilname, new BinaryHttpResponseHandler(allowedType) {
+        client.get(sourceFilname, new BinaryHttpResponseHandler(allowedType) {
 
             @Override
             public void onStart() {
@@ -127,30 +130,31 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
 
-                Log.e("XXXX", "success start");
+                Log.e("STARX", "success start");
 
                 try {
 
                     //Splitting a File Name from SourceFileName
-                    String DestinationName = SourceFilname.substring(SourceFilname.lastIndexOf('/') + 1, SourceFilname.length());
+                    String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
+                    DatabaseHelper.INIT_FOLDER_PATH = "" + DestinationName ;
                     //Saving a File into Download Folder
                     File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
 
 
-                    Log.e("XXXX", "success before crash");
+                    Log.e("STARX", "success before crash");
 
                     FileOutputStream output = new FileOutputStream(_f);// Stopped here
 
 
-                    Log.e("XXXX", "success try");
+                    Log.e("STARX", "success try");
                     output.write(binaryData);
                     output.close();
-                    Log.e("XXXX", "" + _f);
+                    Log.e("STARX", "" + _f);
 
                     // Debut du deziping
                     exportPath = _f.getAbsolutePath();
                     exportPath = exportPath.replace(".zip", "");
-                    Log.e("XXXX", "==> " + exportPath);
+                    Log.e("STARX", "==> " + exportPath);
 
                     exportPath = exportPath + "/" ;
 
@@ -160,8 +164,7 @@ public class MainActivity extends AppCompatActivity {
 
 
                 } catch (IOException e) {
-                    Log.e("XXXX", "success catch");
-
+                    Log.e("STARX", "success catch");
                     e.printStackTrace();
                 }
             }
@@ -170,15 +173,14 @@ public class MainActivity extends AppCompatActivity {
             public void onProgress(long bytesWritten, long totalSize) {
                 super.onProgress(bytesWritten, totalSize);
                 int val = (int) ((bytesWritten * 100) / totalSize);
-                Log.d("XXXX", "downloading ..... "+val);
+                Log.d("STARX", "downloading ..... "+val);
                 mProgressDialog.setProgress(val);
-
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] binaryData, Throwable error) {
 
-                Log.e("XXXX", "==> " + error);
+                Log.e("STARX", "==> " + error);
 
             }
 

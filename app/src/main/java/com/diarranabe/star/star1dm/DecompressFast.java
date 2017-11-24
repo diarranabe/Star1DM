@@ -22,7 +22,6 @@ public class DecompressFast {
     public DecompressFast(String zipFile, String location) {
         _zipFile = zipFile;
         _location = location;
-
         _dirChecker("");
     }
 
@@ -44,18 +43,12 @@ public class DecompressFast {
                     while ((read = zin.read(buffer)) != -1) {
                         bufout.write(buffer, 0, read);
                     }
-
-
                     bufout.close();
-
                     zin.closeEntry();
                     fout.close();
                 }
-
             }
             zin.close();
-
-
             Log.d("XXXXUnzip", "Unzipping complete. path :  " + _location);
         } catch (Exception e) {
             Log.e("XXXXDecompress", "unzip", e);
