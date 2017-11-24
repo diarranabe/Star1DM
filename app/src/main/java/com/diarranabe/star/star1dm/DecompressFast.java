@@ -26,7 +26,7 @@ public class DecompressFast {
         _dirChecker("");
     }
 
-    public void unzip() {
+    public boolean unzip() {
         try {
             FileInputStream fin = new FileInputStream(_zipFile);
             ZipInputStream zin = new ZipInputStream(fin);
@@ -54,14 +54,14 @@ public class DecompressFast {
 
             }
             zin.close();
-
-
             Log.d("XXXXUnzip", "Unzipping complete. path :  " + _location);
+            return true ;
         } catch (Exception e) {
             Log.e("XXXXDecompress", "unzip", e);
 
             Log.d("XXXXUnzip", "Unzipping failed");
         }
+        return false ;
 
     }
 

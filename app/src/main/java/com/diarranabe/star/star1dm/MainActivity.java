@@ -39,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
     //initialize our progress dialog/bar
     private ProgressDialog mProgressDialog;
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
+    ThreadBD b = new ThreadBD() ;
+
+    DatabaseHelper databaseHelper ;
+    SQLiteDatabase db ;
 
     //Absolu path whre file are unZip
     private String exportPath = "" ;
@@ -54,20 +58,34 @@ public class MainActivity extends AppCompatActivity {
         getJson(testUrl);
 
 
-        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        //databaseHelper.onCreate(db);
+        databaseHelper = new DatabaseHelper(getApplicationContext());
 
-        Cursor cursor = null;
-        try {
-        //    db = databaseHelper.getReadableDatabase();
-        //    databaseHelper.onCreate(db);
-       //     databaseHelper.insertStops();
 
-        } finally {
 
+
+
+    }
+
+
+
+
+
+    class  ThreadBD extends Thread{
+        int total;
+        @Override
+        public void run(){
+            synchronized(this){
+                try {
+                    db = databaseHelper.getReadableDatabase();
+                    databaseHelper.onCreate(db);
+                    databaseHelper.insertStops();
+
+                } finally {
+
+                }
+
+            }
         }
-
     }
 
     /**
@@ -172,7 +190,11 @@ public class MainActivity extends AppCompatActivity {
 
                     // decropress file in folder whith id name
                     DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
-                    df.unzip();
+                    boolean vr = df.unzip();
+
+                    if (vr){
+                        b.run();
+                    }
 
 
                 } catch (IOException e) {
@@ -255,5 +277,8 @@ public class MainActivity extends AppCompatActivity {
                 return null;
         }
     }
+
+
+
 
 }

@@ -379,8 +379,8 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract{
     public static ArrayList<tables.Trips> loadTripsData(String path) throws IOException {
         Log.d("STARXT","start loading... "+path);
         ArrayList<tables.Trips> trips = new ArrayList<>();
-     //   FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
-        FileReader file = new FileReader(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), INIT_FOLDER_PATH +path));
+        FileReader file = new FileReader(new File(getExternalStorageDirectory(), INIT_FOLDER_PATH +path));
+     // FileReader file = new FileReader(new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), INIT_FOLDER_PATH +path));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
