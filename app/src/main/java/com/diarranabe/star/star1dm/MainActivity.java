@@ -39,6 +39,10 @@ public class MainActivity extends AppCompatActivity {
     //initialize our progress dialog/bar
     private ProgressDialog mProgressDialog;
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
+    ThreadBD b = new ThreadBD() ;
+
+    DatabaseHelper databaseHelper ;
+    SQLiteDatabase db ;
 
     //Absolu path whre file are unZip
     private String exportPath = "" ;
@@ -51,17 +55,37 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
-
-
-
-        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
-        SQLiteDatabase db = databaseHelper.getReadableDatabase();
-        databaseHelper.insertStops();
-        databaseHelper.insertBusRoutes();
-        databaseHelper.insertCalendars();
         getJson(testUrl);
 
 
+        databaseHelper = new DatabaseHelper(getApplicationContext());
+
+
+
+
+
+    }
+
+
+
+
+
+    class  ThreadBD extends Thread{
+        int total;
+        @Override
+        public void run(){
+            synchronized(this){
+                try {
+                    db = databaseHelper.getReadableDatabase();
+                    databaseHelper.onCreate(db);
+                    databaseHelper.insertStops();
+
+                } finally {
+
+                }
+
+            }
+        }
     }
 
     /**
@@ -114,16 +138,16 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Permite to download Zip file
      *
-     * @param zipFileUrl
+     * @param ursZuip
      */
-    public void downZip(String zipFileUrl) {
-        final String sourceFilname = "" + zipFileUrl;
+    public void downZip(String ursZuip) {
+        final String SourceFilname = "" + ursZuip;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
 
                 "application/zip"
         };
-        client.get(sourceFilname, new BinaryHttpResponseHandler(allowedType) {
+        client.get(SourceFilname, new BinaryHttpResponseHandler(allowedType) {
 
             @Override
             public void onStart() {
@@ -134,43 +158,48 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
 
-                Log.e("STARX", "success start");
+                Log.e("XXXX", "success start");
 
                 try {
 
                     //Splitting a File Name from SourceFileName
-                    String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
-                    DatabaseHelper.INIT_FOLDER_PATH = "" + DestinationName ;
+                    String DestinationName = SourceFilname.substring(SourceFilname.lastIndexOf('/') + 1, SourceFilname.length());
                     //Saving a File into Download Folder
-                    File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
+                    File _f = new File(Environment.getExternalStorageDirectory(), DestinationName);
 
-                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName+"/"  ;
+                   //DatabaseHelper.INIT_FOLDER_PATH = DestinationName+"/"  ;
 
 
-                    Log.e("STARX", "success before crash");
+                    Log.e("XXXX", "success before crash");
 
                     FileOutputStream output = new FileOutputStream(_f);// Stopped here
 
 
-                    Log.e("STARX", "success try");
+                    Log.e("XXXX", "success try");
                     output.write(binaryData);
                     output.close();
-                    Log.e("STARX", "" + _f);
+                    Log.e("XXXX", "" + _f);
+                 //   Log.e("XXXX", " --> " + Environment.getExternalStorageDirectory()+"/" +DatabaseHelper.INIT_FOLDER_PATH);
 
                     // Debut du deziping
-                    exportPath = _f.getAbsolutePath();
-                    exportPath = exportPath.replace(".zip", "");
-                    Log.e("STARX", "==> " + exportPath);
+                    exportPath = Environment.getExternalStorageDirectory()+"/" +DatabaseHelper.INIT_FOLDER_PATH;
+                  //  exportPath = exportPath.replace(".zip", "");
+                    Log.e("XXXX", "==> " + exportPath);
 
-                    exportPath = exportPath + "/" ;
+                //    exportPath = exportPath + "/" ;
 
                     // decropress file in folder whith id name
                     DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
-                    df.unzip();
+                    boolean vr = df.unzip();
+
+                    if (vr){
+                        b.run();
+                    }
 
 
                 } catch (IOException e) {
-                    Log.e("STARX", "success catch");
+                    Log.e("XXXX", "success catch");
+
                     e.printStackTrace();
                 }
             }
@@ -179,14 +208,15 @@ public class MainActivity extends AppCompatActivity {
             public void onProgress(long bytesWritten, long totalSize) {
                 super.onProgress(bytesWritten, totalSize);
                 int val = (int) ((bytesWritten * 100) / totalSize);
-                Log.d("STARX", "downloading ..... "+val);
+                Log.d("XXXX", "downloading ..... "+val);
                 mProgressDialog.setProgress(val);
+
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] binaryData, Throwable error) {
 
-                Log.e("STARX", "==> " + error);
+                Log.e("XXXX", "==> " + error);
 
             }
 
@@ -247,5 +277,8 @@ public class MainActivity extends AppCompatActivity {
                 return null;
         }
     }
+
+
+
 
 }
