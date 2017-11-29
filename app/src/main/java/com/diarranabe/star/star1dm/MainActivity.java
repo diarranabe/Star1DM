@@ -6,12 +6,15 @@ import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.BinaryHttpResponseHandler;
@@ -52,16 +55,39 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
         DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
-        databaseHelper.insertTrips();
-        ArrayList<tables.Trips> cb = databaseHelper.getTripsFromDatabase();
 
-//        String[] st = getStops();
-        /*databaseHelper.insertStops();
+        testProvider();
+        /*databaseHelper.insertCalendars();
         databaseHelper.insertBusRoutes();
-        databaseHelper.insertCalendars();*/
-        //getJson(testUrl);
+        databaseHelper.insertStops();
+        databaseHelper.insertTrips();
+        databaseHelper.insertStopTimes();
+*/
+//        ArrayList<tables.StopTime> cb = databaseHelper.getStopTimesFromDatabase();
+
     }
 
+    public void testProvider() {
+        // Retrieve student records
+        Uri students = StarContract.BusRoutes.CONTENT_URI;
+        Cursor cursor = managedQuery(students, null, null, null, StarContract.BusRoutes.BusRouteColumns.SHORT_NAME);
+
+        if (cursor.moveToFirst()) {
+            do{
+                tables.BusRoute item = new tables.BusRoute(
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)),
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.LONG_NAME)),
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.TYPE)),
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.COLOR)),
+                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
+                );
+                Log.d("STARXTEST","Received from provider ..."+item);
+                /*Log.d("STARXTEST",", " +  cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)) +
+                        ", " +  cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)));*/
+            } while (cursor.moveToNext());
+        }
+    }
 
     /**
      * connexion to Star Api to get url of zip and id of traject
@@ -71,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
      */
     public void getJson(String url) {
         AsyncHttpClient client = new AsyncHttpClient();
-        final ArrayList<String> listResult = new ArrayList<String>();
         client.get("" + url, new JsonHttpResponseHandler() {
 
             @Override
@@ -83,9 +108,6 @@ public class MainActivity extends AppCompatActivity {
                     JSONObject object1 = (JSONObject) reords.get(0);
 
                     JSONObject object2 = (JSONObject) object1.get("fields");
-
-                    listResult.add(object2.get("url").toString());
-                    listResult.add(object2.get("id").toString());
 
                     downZip(object2.get("url").toString());
 
@@ -116,7 +138,6 @@ public class MainActivity extends AppCompatActivity {
         final String sourceFilname = "" + zipFileUrl;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
-
                 "application/zip"
         };
         client.get(sourceFilname, new BinaryHttpResponseHandler(allowedType) {
@@ -142,10 +163,7 @@ public class MainActivity extends AppCompatActivity {
 
                     DatabaseHelper.INIT_FOLDER_PATH = DestinationName + "/";
 
-
-                    Log.e("STARX", "success before crash");
-
-                    FileOutputStream output = new FileOutputStream(_f);// Stopped here
+                    FileOutputStream output = new FileOutputStream(_f);
 
 
                     Log.e("STARX", "success try");
@@ -246,4 +264,21 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void onClickRetrieveStudents(View view) {
+        // Retrieve student records
+        String URL = "content://com.example.MyApplication.StudentsProvider";
+
+        Uri students = Uri.parse(URL);
+        Cursor c = managedQuery(students, null, null, null, "name");
+
+        if (c.moveToFirst()) {
+            do{
+              /*  Toast.makeText(this,
+                        c.getString(c.getColumnIndex(StudentsProvider._ID)) +
+                                ", " +  c.getString(c.getColumnIndex( StudentsProvider.NAME)) +
+                                ", " + c.getString(c.getColumnIndex( StudentsProvider.GRADE)),
+                        Toast.LENGTH_SHORT).show();*/
+            } while (c.moveToNext());
+        }
+    }
 }
