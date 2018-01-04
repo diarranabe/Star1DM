@@ -6,18 +6,29 @@ package tables;
 
 public class Stop {
 
+    private String stop_id;
     private String name;
     private String description;
     private float latitude;
     private float longitude;
     private String wheelChairBoalding;
 
-    public Stop(String name, String description, float latitude, float longitude, String wheelChairBoalding) {
+    public Stop(String _id, String name, String description, float latitude, float longitude, String wheelChairBoalding) {
+        this.stop_id = _id;
         this.name = name;
         this.description = description;
         this.latitude = latitude;
         this.longitude = longitude;
         this.wheelChairBoalding = wheelChairBoalding;
+    }
+
+
+    public String getId() {
+        return stop_id;
+    }
+
+    public void setId(String id) {
+        this.stop_id = id;
     }
 
     public String getName() {
@@ -63,7 +74,8 @@ public class Stop {
     @Override
     public String toString() {
         return "Stop{" +
-                "name='" + name + '\'' +
+                "id='" + stop_id + '\'' +
+                ", name='" + name + '\'' +
                 ", description='" + description + '\'' +
                 ", latitude=" + latitude +
                 ", longitude=" + longitude +

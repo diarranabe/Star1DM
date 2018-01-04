@@ -15,6 +15,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+
+
+        <service
+            android:name=".CheckStarDataService"
+            android:icon="@drawable/ic_launcher_background"
+            android:label="@string/star_service"
+            >
+        </service>
+
+
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

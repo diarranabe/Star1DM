@@ -89,6 +89,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public void insertRoute(BusRoute route) {
         database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(BusRoutes.BusRouteColumns.ROUTE_ID, route.getRoute_id());
         values.put(BusRoutes.BusRouteColumns.SHORT_NAME, route.getShortName());
         values.put(BusRoutes.BusRouteColumns.LONG_NAME, route.getLongName());
         values.put(BusRoutes.BusRouteColumns.DESCRIPTION, route.getDescription());
@@ -150,6 +151,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public void insertStop(Stop stop) {
         database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(Stops.StopColumns.STOP_ID, stop.getId());
         values.put(Stops.StopColumns.NAME, stop.getName());
         values.put(Stops.StopColumns.DESCRIPTION, stop.getDescription());
         values.put(Stops.StopColumns.LATITUDE, stop.getLatitude());
@@ -296,11 +298,12 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                 String[] str = line.split(",");
                 tables.BusRoute br = new tables.BusRoute(
                         str[0].replaceAll("\"", ""),
-                        str[1].replaceAll("\"", ""),
                         str[2].replaceAll("\"", ""),
                         str[3].replaceAll("\"", ""),
                         str[4].replaceAll("\"", ""),
-                        str[5].replaceAll("\"", ""));
+                        str[5].replaceAll("\"", ""),
+                        str[7].replaceAll("\"", ""),
+                        str[8].replaceAll("\"", ""));
                 busRoutes.add(br);
                 Log.d("STARXBR", "loaded... " + br.toString());
             }
@@ -327,12 +330,13 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         while ((line = buffer.readLine()) != null) {
             if (i != 0) {
                 String[] str = line.split(",");
+                String id = str[0].replaceAll("\"", "");
                 String name = str[2].replaceAll("\"", "");
                 String description = str[3].replaceAll("\"", "");
                 float latitude = Float.valueOf(str[4].replace('"', ' '));
                 float longitude = Float.valueOf(str[5].replace('"', ' '));
                 String wheelChairBoalding = str[11].replaceAll("\"", "");
-                tables.Stop stop = new tables.Stop(name, description, latitude, longitude, wheelChairBoalding);
+                tables.Stop stop = new tables.Stop(id,name, description, latitude, longitude, wheelChairBoalding);
                 stops.add(stop);
                 Log.d("STARXS", "loaded... " + stop.toString());
             }
@@ -420,12 +424,13 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         if (cursor.moveToFirst()) {
             do {
                 tables.BusRoute item = new tables.BusRoute(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5)
+                        cursor.getString(cursor.getColumnIndex(BusRoutes.BusRouteColumns.ROUTE_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.LONG_NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TYPE)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.COLOR)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
                 );
                 data.add(item);
                 Log.d("STARX", "load from db..." + item);
@@ -479,9 +484,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                 tables.Stop item = new tables.Stop(
                         cursor.getString(0),
                         cursor.getString(1),
-                        cursor.getFloat(2),
+                        cursor.getString(2),
                         cursor.getFloat(3),
-                        cursor.getString(4)
+                        cursor.getFloat(4),
+                        cursor.getString(5)
                 );
                 data.add(item);
                 Log.d("STARX", "load from database..." + item);

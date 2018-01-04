@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Star1DM</string>
+    <string name="star_service">Star Update Service</string>
+    <string name="data_url_brodcast_id">com.diarranabe.star.star1dm.dataurl</string>
 </resources>

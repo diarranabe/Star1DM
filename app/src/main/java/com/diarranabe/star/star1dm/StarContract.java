@@ -13,10 +13,11 @@ public interface StarContract {
         String CONTENT_PATH = "busroute";
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.busroute";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.busroute";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.busroute";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.busroute";
         interface BusRouteColumns extends BaseColumns {
+            String ROUTE_ID = "route_id";
             String SHORT_NAME = "route_short_name";
             String LONG_NAME = "route_long_name";
             String DESCRIPTION = "route_desc";
@@ -30,9 +31,9 @@ public interface StarContract {
         String CONTENT_PATH = "trip";
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.trip";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.trip";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.trip";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.trip";
         interface TripColumns extends BaseColumns {
             String ROUTE_ID = "route_id";
             String SERVICE_ID = "service_id";
@@ -47,10 +48,11 @@ public interface StarContract {
         String CONTENT_PATH = "stop";
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.stop";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.stop";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.stop";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.stop";
         interface StopColumns extends BaseColumns {
+            String STOP_ID = "stop_id";
             String NAME = "stop_name";
             String DESCRIPTION = "stop_desc";
             String LATITUDE = "stop_lat";
@@ -63,9 +65,9 @@ public interface StarContract {
         String CONTENT_PATH = "stoptime";
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.stoptime";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.stoptime";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.stoptime";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.stoptime";
         interface StopTimeColumns extends BaseColumns {
             String TRIP_ID = "trip_id";
             String ARRIVAL_TIME = "arrival_time";
@@ -79,9 +81,9 @@ public interface StarContract {
         String CONTENT_PATH = "calendar";
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.calendar";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.calendar";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.calendar";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.calendar";
         interface CalendarColumns extends BaseColumns {
             String MONDAY = "monday";
             String TUESDAY = "tuesday";
@@ -100,8 +102,19 @@ public interface StarContract {
         Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
         // select stop.stop_name, stop_time.arrival_time
         String CONTENT_TYPE =
-                "vnd.android.cursor.dir/vnd.fr.istic.starproviderDM.routedetails";
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.routedetails";
         String CONTENT_ITEM_TYPE =
-                "vnd.android.cursor.item/vnd.fr.istic.starproviderDM.routedetails";
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.routedetails";
+    }
+
+
+    interface RouteStops{
+        String CONTENT_PATH = "routestops";
+        Uri CONTENT_URI = Uri.withAppendedPath(AUTHORITY_URI, CONTENT_PATH);
+        // select stop.stop_name, stop_time.arrival_time
+        String CONTENT_TYPE =
+                "vnd.android.cursor.dir/vnd.fr.istic.starproviderdm.routestops";
+        String CONTENT_ITEM_TYPE =
+                "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.routestops";
     }
 }

@@ -3,18 +3,15 @@ package com.diarranabe.star.star1dm;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.BinaryHttpResponseHandler;
@@ -26,15 +23,9 @@ import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-
-import static android.system.Os.close;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -50,43 +41,25 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_main);
-        verifyStoragePermissions(this);
-        DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
+//        verifyStoragePermissions(this);
+        Log.d("STARX", "start");
 
-        testProvider();
-        /*databaseHelper.insertCalendars();
-        databaseHelper.insertBusRoutes();
-        databaseHelper.insertStops();
-        databaseHelper.insertTrips();
-        databaseHelper.insertStopTimes();
-*/
+/*        ArrayList<BusRoute> br = databaseHelper.getBusRoutesFromDatabase();
+        for (BusRoute b : br){
+            Log.d("STARX",b.toString());
+        }*/
+        Intent intent = new Intent(this, CheckStarDataService.class);
+        startService(intent);
+
+//        getBusRoutesFromProvider();
+//        databaseHelper.insertTrips();
+//        testTripsProvider();
 //        ArrayList<tables.StopTime> cb = databaseHelper.getStopTimesFromDatabase();
+        Log.d("STARX", "end");
 
-    }
-
-    public void testProvider() {
-        // Retrieve student records
-        Uri students = StarContract.BusRoutes.CONTENT_URI;
-        Cursor cursor = managedQuery(students, null, null, null, StarContract.BusRoutes.BusRouteColumns.SHORT_NAME);
-
-        if (cursor.moveToFirst()) {
-            do{
-                tables.BusRoute item = new tables.BusRoute(
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)),
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.LONG_NAME)),
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)),
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.TYPE)),
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.COLOR)),
-                        cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
-                );
-                Log.d("STARXTEST","Received from provider ..."+item);
-                /*Log.d("STARXTEST",", " +  cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)) +
-                        ", " +  cursor.getString(cursor.getColumnIndex( StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)));*/
-            } while (cursor.moveToNext());
-        }
     }
 
     /**
@@ -215,6 +188,8 @@ public class MainActivity extends AppCompatActivity {
 
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
+
+
     private static String[] PERMISSIONS_STORAGE = {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -240,7 +215,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     /**
      * Progresse Bar
      *
@@ -264,21 +238,121 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void onClickRetrieveStudents(View view) {
+    public void getBusRoutesFromProvider() {
+        Log.d("STARX", "Test BusRoutesProvider");
+        Uri ur = Uri.parse("content://fr.istic.starproviderDM");
+
+        Uri uri = Uri.withAppendedPath(ur, "busroute/0002/");
+
+//        uri.
+//        Uri uri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.BusRoutes.CONTENT_PATH + "/0006");
+        String[] args = {"nf"};
+        Cursor cursor = managedQuery(uri,
+                null, null, args,
+                StarContract.BusRoutes.BusRouteColumns.ROUTE_ID);
+
+        if (cursor.moveToFirst()) {
+            do {
+                tables.BusRoute item = new tables.BusRoute(
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.ROUTE_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.LONG_NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TYPE)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.COLOR)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
+                );
+//                Log.d("STARXTEST", "Received from provider ..." + cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.WHEELCHAIR_ACCESSIBLE)));
+                Log.d("STARXTEST", "Received from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
+
+    public void testTripsProvider() {
+        Log.d("STARX", "Test TripsProvider");
+        Uri tripsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Trips.CONTENT_PATH + "");
+        Cursor cursor = managedQuery(tripsUri,
+                null, null, null,
+                StarContract.Trips.TripColumns.ROUTE_ID);
+
+        if (cursor.moveToFirst()) {
+            do {
+                tables.Trips item = new tables.Trips(
+                        cursor.getInt(0),
+                        cursor.getInt(1),
+                        cursor.getString(2),
+                        cursor.getInt(3),
+                        cursor.getString(4),
+                        cursor.getString(5)
+                );
+                Log.d("STARXTEST", "Received from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
+
+    public void testCalendarProvider() {
         // Retrieve student records
-        String URL = "content://com.example.MyApplication.StudentsProvider";
+        Uri calendarUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Calendar.CONTENT_PATH + "/20171109");
+        Cursor cursor = managedQuery(calendarUri,
+                null, null, null,
+                StarContract.Calendar.CalendarColumns.START_DATE);
+        if (cursor.moveToFirst()) {
+            do {
+                tables.Calendar item = new tables.Calendar(
+                        cursor.getString(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getString(3),
+                        cursor.getString(4),
+                        cursor.getString(5),
+                        cursor.getString(6),
+                        cursor.getString(7),
+                        cursor.getString(8)
+                );
+                Log.d("STARXTEST", "Received from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
 
-        Uri students = Uri.parse(URL);
-        Cursor c = managedQuery(students, null, null, null, "name");
+    public void testStopsProvider() {
+        // Retrieve student records
+        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "/6000");
+        Cursor cursor = managedQuery(stopsUri,
+                null, null, null,
+                StarContract.Stops.StopColumns.STOP_ID);
+        if (cursor.moveToFirst()) {
+            do {
+                tables.Stop item = new tables.Stop(
+                        cursor.getString(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getFloat(3),
+                        cursor.getFloat(4),
+                        cursor.getString(5)
+                );
+                Log.d("STARXTEST", "Received from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
 
-        if (c.moveToFirst()) {
-            do{
-              /*  Toast.makeText(this,
-                        c.getString(c.getColumnIndex(StudentsProvider._ID)) +
-                                ", " +  c.getString(c.getColumnIndex( StudentsProvider.NAME)) +
-                                ", " + c.getString(c.getColumnIndex( StudentsProvider.GRADE)),
-                        Toast.LENGTH_SHORT).show();*/
-            } while (c.moveToNext());
+    public void testStopTimesProvider() {
+        Log.d("STARX", "Test StopTimesProvider");
+        Uri tripsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.StopTimes.CONTENT_PATH + "/23719");
+        Cursor cursor = managedQuery(tripsUri,
+                null, null, null,
+                StarContract.StopTimes.StopTimeColumns.TRIP_ID);
+
+        if (cursor.moveToFirst()) {
+            do {
+                tables.StopTime item = new tables.StopTime(
+                        cursor.getInt(0),
+                        cursor.getString(1),
+                        cursor.getString(2),
+                        cursor.getInt(3),
+                        cursor.getString(4)
+                );
+                Log.d("STARXTEST", "Received from provider ..." + item);
+            } while (cursor.moveToNext());
         }
     }
 }

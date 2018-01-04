@@ -7,6 +7,7 @@ package tables;
 public class BusRoute {
 
 
+    private String route_id;
     private String shortName;
     private String longName;
     private String description;
@@ -14,7 +15,8 @@ public class BusRoute {
     private String color;
     private  String textColor;
 
-    public BusRoute(String shortName, String longName, String description, String type, String color, String textColor) {
+    public BusRoute(String route_id, String shortName, String longName, String description, String type, String color, String textColor) {
+        this.route_id = route_id;
         this.shortName = shortName;
         this.longName = longName;
         this.description = description;
@@ -23,12 +25,31 @@ public class BusRoute {
         this.textColor = textColor;
     }
 
+    /*public BusRoute(String shortName, String longName, String description, String type, String color, String textColor) {
+        this.shortName = shortName;
+        this.longName = longName;
+        this.description = description;
+        this.type = type;
+        this.color = color;
+        this.textColor = textColor;
+    }*/
+
+
+
     public String getShortName() {
         return shortName;
     }
 
     public void setShortName(String shortName) {
         this.shortName = shortName;
+    }
+
+    public String getRoute_id() {
+        return route_id;
+    }
+
+    public void setRoute_id(String route_id) {
+        this.route_id = route_id;
     }
 
     public String getLongName() {
@@ -74,7 +95,8 @@ public class BusRoute {
     @Override
     public String toString() {
         return "BusRoute{" +
-                "shortName='" + shortName + '\'' +
+                "route_id='" + route_id + '\'' +
+                ", shortName='" + shortName + '\'' +
                 ", longName='" + longName + '\'' +
                 ", description='" + description + '\'' +
                 ", type='" + type + '\'' +
