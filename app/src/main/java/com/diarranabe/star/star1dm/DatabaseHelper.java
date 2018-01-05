@@ -5,7 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Environment;
+import android.os.Bundle;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -54,6 +54,18 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         db.execSQL(Constants.CREATE_STOP_TIMES_TABLE);
         db.execSQL(Constants.CREATE_STOPS_TABLE);
         db.execSQL(Constants.CREATE_TRIPS_TABLE);
+        db.execSQL(Constants.CREATE_VERSIONS_TABLE);
+        /**
+         * Initialisation des versions
+         */
+        ContentValues values = new ContentValues();
+        ContentValues values2 = new ContentValues();
+        values.put(Constants.VERSIONS_FILE_NAME_COL, "file1");
+        values2.put(Constants.VERSIONS_FILE_NAME_COL, "file2");
+        values.put(Constants.VERSIONS_FILE_VERSION_COL, Constants.DEFAULT_FIRST_VERSION);
+        values2.put(Constants.VERSIONS_FILE_VERSION_COL, "0002");
+        db.insert(Constants.VERSIONS_TABLE, null, values);
+        db.insert(Constants.VERSIONS_TABLE, null, values2);
         Log.d("STARX", "db cretaed");
     }
 
@@ -65,6 +77,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         db.execSQL("DROP TABLE IF EXISTS " + Stops.CONTENT_PATH);
         db.execSQL("DROP TABLE IF EXISTS " + StopTimes.CONTENT_PATH);
         db.execSQL("DROP TABLE IF EXISTS " + Calendar.CONTENT_PATH);
+        db.execSQL("DROP TABLE IF EXISTS " + Constants.VERSIONS_TABLE);
         onCreate(db);
     }
 
@@ -79,6 +92,17 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             } while (cursor.moveToNext());
         }
         return result;
+    }
+
+    /**
+     * Insert toutes les données disponibles dans le dossier
+     */
+    public void  insertAll(){
+        insertBusRoutes();
+        insertCalendars();
+        insertStops();
+        insertTrips();
+        insertStopTimes();
     }
 
     /**
@@ -551,4 +575,54 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         cursor.close();
         return data;
     }
+
+
+
+    public static ArrayList<String> getVersions(Context context){
+        DatabaseHelper databaseHelper = new DatabaseHelper(context);
+        String selectQuery = "SELECT  * FROM " + Constants.VERSIONS_TABLE;
+        ArrayList<String> versions = new ArrayList<>();
+        Cursor cursor = databaseHelper.getWritableDatabase().rawQuery(selectQuery, null);
+        if (cursor.moveToFirst()) {
+            do {
+                versions.add(cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL)));
+                Log.d("STARX", "version from db...file: " +cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_NAME_COL))+
+                        ", ver: "+cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL))
+                );
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return versions;
+    }
+
+
+    public void updateVersions(Context context, Bundle bundle){
+        if(bundle != null){
+            if(bundle.containsKey(context.getResources().getString(R.string.data1_url_id))
+                    && bundle.containsKey(context.getResources().getString(R.string.data2_url_id))
+                    && bundle.containsKey(context.getResources().getString(R.string.data1_date_id))
+                    && bundle.containsKey(context.getResources().getString(R.string.data2_date_id))
+                    )
+            {
+                String msg1 = bundle.getString(context.getResources().getString(R.string.data1_url_id));
+                String msg2= bundle.getString(context.getResources().getString(R.string.data2_url_id));
+                String date1= bundle.getString(context.getResources().getString(R.string.data1_date_id));
+                String date2= bundle.getString(context.getResources().getString(R.string.data2_date_id));
+                database = this.getWritableDatabase();
+                database.execSQL("DROP TABLE IF EXISTS " + Constants.VERSIONS_TABLE);
+                ContentValues values = new ContentValues();
+                ContentValues values2 = new ContentValues();
+                values.put(Constants.VERSIONS_FILE_NAME_COL,msg1);
+                values2.put(Constants.VERSIONS_FILE_NAME_COL, msg2);
+                values.put(Constants.VERSIONS_FILE_VERSION_COL, date1);
+                values2.put(Constants.VERSIONS_FILE_VERSION_COL, date2);
+                database.insert(Constants.VERSIONS_TABLE, null, values);
+                database.insert(Constants.VERSIONS_TABLE, null, values2);
+                Log.d("STARX", " new version : "+msg1+", date: "+date1);
+                Log.d("STARX", " new version : "+msg2+", date: "+date2);
+            }
+        }
+
+    }
+
 }

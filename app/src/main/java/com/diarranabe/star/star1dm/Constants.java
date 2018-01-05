@@ -49,4 +49,23 @@ public class Constants implements StarContract {
             Calendar.CalendarColumns.START_DATE + " TEXT," +
             Calendar.CalendarColumns.END_DATE + " TEXT" +
             " );";
+
+    /**
+     * La table qui stock les versions
+     */
+    public static final String VERSIONS_TABLE = "versions";
+    public static final String VERSIONS_FILE_NAME_COL = "file_name";
+    public static final String VERSIONS_FILE_VERSION_COL = "file_version";
+    public static final String CREATE_VERSIONS_TABLE = "CREATE TABLE IF NOT EXISTS " + VERSIONS_TABLE +
+            "( " + VERSIONS_FILE_NAME_COL + " TEXT , " +
+            VERSIONS_FILE_VERSION_COL + " TEXT" +
+            " );";
+
+    /**
+     * Version par defaut
+     */
+    public static final String DEFAULT_FIRST_VERSION = "0001";
+
+
+    public static String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 }

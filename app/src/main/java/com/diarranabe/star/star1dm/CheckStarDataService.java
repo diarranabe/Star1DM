@@ -17,6 +17,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -27,15 +28,20 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class CheckStarDataService extends Service {
-    private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+//        private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+//    private String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
     private long attempt = 0;
     private String DATA_URL1 = "";
     private String DATA_URL2 = "";
+    private String DATA_URL1_LAST_UPDATE = "";
+    private String DATA_URL2_LAST_UPDATE = "";
+
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //TODO do something useful
-        callAsynchronousTask();
+
+        checkStarVersions();
+
         return Service.START_STICKY;
     }
 
@@ -46,7 +52,7 @@ public class CheckStarDataService extends Service {
     }
 
 
-    public void callAsynchronousTask() {
+    public void checkStarVersions() {
         final Handler handler = new Handler();
         Timer timer = new Timer();
         TimerTask doAsynchronousTask = new TimerTask() {
@@ -55,7 +61,10 @@ public class CheckStarDataService extends Service {
                 handler.post(new Runnable() {
                     public void run() {
                         try {
-                            getJson();
+                            Log.d("STARX", "check start");
+
+                            getVersionsInfos();
+
                             Log.d("STARX", "My Service ok ! " + attempt);
                             attempt++;
 //                            PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
@@ -68,7 +77,7 @@ public class CheckStarDataService extends Service {
                 });
             }
         };
-        timer.schedule(doAsynchronousTask, 10000, 50000); //execute in every 50000 ms
+        timer.schedule(doAsynchronousTask, 1000, 5000); //execute in every 50000 ms
     }
 
     private void notifyActivity() {
@@ -76,12 +85,15 @@ public class CheckStarDataService extends Service {
         NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(getApplicationContext())
                         .setSmallIcon(R.drawable.ic_launcher_foreground)
-                        .setContentTitle("New data available")
+                        .setContentTitle("New data are available")
                         .setContentText("Update the database");
 
         Intent resultIntent = new Intent(getApplicationContext(), MainActivity.class);
         Bundle bundle = new Bundle();
-        bundle.putString(getString(R.string.data_url_brodcast_id), DATA_URL1);
+        bundle.putString(getString(R.string.data1_url_id), DATA_URL1);
+        bundle.putString(getString(R.string.data2_url_id), DATA_URL2);
+        bundle.putString(getString(R.string.data1_date_id), DATA_URL1_LAST_UPDATE);
+        bundle.putString(getString(R.string.data2_date_id), DATA_URL2_LAST_UPDATE);
         resultIntent.putExtras(bundle);
 
         // Because clicking the notification opens a new ("special") activity, there's
@@ -104,33 +116,51 @@ public class CheckStarDataService extends Service {
         mNotifyMgr.notify(mNotificationId, mBuilder.build());
     }
 
-
-
     /**
      * connexion to Star Api to get url of zip and id of traject
      *
      * @return
      */
-    public void  getJson() {
+    public void getVersionsInfos() {
+        Log.d("STARX", "version start a0 ");
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get(DATA_SOURCE_URL, new JsonHttpResponseHandler() {
+        client.get(Constants.DATA_SOURCE_URL, new JsonHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("STARX", "version start ");
 
                 try {
+                    Log.d("STARX", "start new data");
                     JSONArray reords = response.getJSONArray("records");
 
-                    JSONObject object1 = (JSONObject) reords.get(0);
+                    /**
+                     * Traitement du premier fichier
+                     */
+                    JSONObject file1 = (JSONObject) reords.get(0);
+                    JSONObject file12 = (JSONObject) file1.get("fields");
+                    JSONObject fichier1 = (JSONObject) file12.get("fichier");
+                    String last_sync1 = (String) fichier1.get("last_synchronized");
+                    String newData1 = file12.get("url").toString();
 
-                    JSONObject object2 = (JSONObject) object1.get("fields");
+                    /**
+                     * Traitement du second fichier
+                     */
+                    JSONObject file2 = (JSONObject) reords.get(1);
+                    JSONObject file22 = (JSONObject) file2.get("fields");
+                    JSONObject fichier2 = (JSONObject) file22.get("fichier");
+                    String last_sync2 = (String) fichier2.get("last_synchronized");
+                    String newData2 = file22.get("url").toString();
 
-                    String newData = (String) object2.get("url").toString();
-
-                    if (!DATA_URL1.equals(newData)){
-                        DATA_URL1 = newData;
+                    ArrayList<String> versions = DatabaseHelper.getVersions(getApplicationContext());
+                    if (!(versions.get(0).equals(last_sync1)) || !(versions.get(1).equals(last_sync2))) {
+                        DATA_URL1 = newData1;
+                        DATA_URL2 = newData2;
+                        DATA_URL1_LAST_UPDATE = last_sync1;
+                        DATA_URL2_LAST_UPDATE = last_sync2;
                         notifyActivity();
-                        Log.d("STARX", "new data url " + DATA_URL1);
+                        Log.d("STARX", "new data url1: " + DATA_URL1 + ", date: " + DATA_URL1_LAST_UPDATE);
+                        Log.d("STARX", "new data url1: " + DATA_URL2 + ", date: " + DATA_URL2_LAST_UPDATE);
                     }
                     Log.d("STARX", "database is up to date ");
                 } catch (JSONException e) {
@@ -143,11 +173,10 @@ public class CheckStarDataService extends Service {
             @Override
             public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                 super.onFailure(statusCode, headers, responseString, throwable);
-                Log.e("XXXX", "==> PROBLEME DE CHARGEMENRT <==");
+                Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
             }
         });
 
     }
-
 
 }

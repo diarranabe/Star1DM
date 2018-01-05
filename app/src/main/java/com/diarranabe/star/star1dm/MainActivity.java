@@ -3,9 +3,11 @@ package com.diarranabe.star.star1dm;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -22,10 +24,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
+import tables.BusRoute;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+
+import static android.os.Environment.getExternalStorageDirectory;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -33,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     //initialize our progress dialog/bar
     private ProgressDialog mProgressDialog;
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
+    DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
 
     //Absolu path whre file are unZip
     private String exportPath = "";
@@ -47,19 +55,53 @@ public class MainActivity extends AppCompatActivity {
 //        verifyStoragePermissions(this);
         Log.d("STARX", "start");
 
-/*        ArrayList<BusRoute> br = databaseHelper.getBusRoutesFromDatabase();
-        for (BusRoute b : br){
-            Log.d("STARX",b.toString());
-        }*/
+        if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
+            loadFirstFileData();
+        }
+        onNewIntent(getIntent());
+
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);
-
 //        getBusRoutesFromProvider();
 //        databaseHelper.insertTrips();
 //        testTripsProvider();
 //        ArrayList<tables.StopTime> cb = databaseHelper.getStopTimesFromDatabase();
         Log.d("STARX", "end");
 
+    }
+
+
+    /**
+     * Losrqu'on clic sur la notif de mise à jour
+     * @param intent
+     */
+    public void onNewIntent(Intent intent){
+        Bundle extras = intent.getExtras();
+        if(extras != null){
+            if(extras.containsKey(getString(R.string.data1_url_id))
+                    && extras.containsKey(getString(R.string.data2_url_id))
+                    && extras.containsKey(getString(R.string.data1_date_id))
+                    && extras.containsKey(getString(R.string.data2_date_id))
+                    )
+            {
+                String file1 = extras.getString(getString(R.string.data1_url_id));
+                String file2= extras.getString(getString(R.string.data2_url_id));
+                String date1= extras.getString(getString(R.string.data1_date_id));
+                String date2= extras.getString(getString(R.string.data2_date_id));
+                Log.d("STARX", " notif msg : "+file1+", date: "+date1);
+                Log.d("STARX", " notif msg : "+file2+", date: "+date2);
+
+                // Telecharger et Ajouter les nouvelles données
+                downZip(file1);
+                downZip(file2);
+
+                DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
+                /**
+                 * Mettre les versions à jour
+                 */
+                dh.updateVersions(getApplicationContext(), extras);
+            }
+        }
     }
 
     /**
@@ -132,9 +174,14 @@ public class MainActivity extends AppCompatActivity {
                     String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
                     DatabaseHelper.INIT_FOLDER_PATH = "" + DestinationName;
                     //Saving a File into Download Folder
-                    File _f = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), DestinationName);
+                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
+                    String INIT_FOLDER_PATH = "star1dm/";
 
-                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName + "/";
+                    File file = new File((DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH));
+
+                    File _f = new File(file, DestinationName);
+
+//                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName + "/";
 
                     FileOutputStream output = new FileOutputStream(_f);
 
@@ -154,6 +201,12 @@ public class MainActivity extends AppCompatActivity {
                     // decropress file in folder whith id name
                     DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
                     df.unzip();
+
+                    /**
+                     * Inserer les données télechargées
+                     */
+                    DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
+                    databaseHelper.insertAll();
 
 
                 } catch (IOException e) {
@@ -185,6 +238,52 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+
+    /**
+     * Telecharge le premier fichier
+     */
+    public void loadFirstFileData() {
+        Log.d("STARX", "first file start  ");
+        AsyncHttpClient client = new AsyncHttpClient();
+        client.get(Constants.DATA_SOURCE_URL, new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.d("STARX", "first file success start ");
+
+                try {
+                    JSONArray reords = response.getJSONArray("records");
+
+                    /**
+                     * Traitement du fichier
+                     */
+                    JSONObject file1 = (JSONObject) reords.get(0);
+                    JSONObject file12 = (JSONObject) file1.get("fields");
+                    JSONObject fichier1 = (JSONObject) file12.get("fichier");
+                    String last_sync1 = (String) fichier1.get("last_synchronized");
+                    String file_url = file12.get("url").toString();
+
+                    /**
+                     * Telecharger et ajouter les dnées dans la bd
+                     */
+                    downZip(file_url);
+
+                    Log.d("STARX", "first file inserted in the database");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //Json object is returned as a response
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
+            }
+        });
+
+    }
 
     // Storage Permissions variables
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
