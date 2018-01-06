@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteStatement;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -17,6 +18,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -26,6 +28,7 @@ import tables.Stop;
 import tables.StopTime;
 import tables.Trip;
 
+import static android.content.ContentValues.TAG;
 import static android.os.Environment.getExternalStorageDirectory;
 
 
@@ -110,8 +113,8 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 //        insertBusRoutes();
 //        insertCalendars();
 //        insertStops();
-        insertTrips();
-//        insertStopTimes();
+//        insertTrips();
+        insertStopTimes();
     }
 
     /**
@@ -176,7 +179,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         long count = 0;
         for (Trip item : items) {
             count++;
-            Log.d("STARX", count+"-Inserting ...." + item.toString());
+            Log.d("STARX", count + "-Inserting ...." + item.toString());
             insertTrip(item);
         }
     }
@@ -223,7 +226,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @param stopTime
      */
     public void insertStopTime(StopTime stopTime) {
-        database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(StopTimes.StopTimeColumns.TRIP_ID, stopTime.getTripId());
         values.put(StopTimes.StopTimeColumns.ARRIVAL_TIME, stopTime.getArrivalTime());
@@ -231,6 +233,40 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         values.put(StopTimes.StopTimeColumns.STOP_ID, stopTime.getStopId());
         values.put(StopTimes.StopTimeColumns.STOP_SEQUENCE, stopTime.getStopSequence());
         database.insert(StopTimes.CONTENT_PATH, null, values);
+    }
+
+    public void insertStopTimes(ArrayList<StopTime> stopTimes) {
+        database = this.getWritableDatabase();
+        /*for (StopTime stopTime : stopTimes){
+            insertStopTime(stopTime);
+        }*/
+        try {
+            database.beginTransaction();
+            String sql = "INSERT INTO " + StopTimes.CONTENT_PATH + " (" +
+                    StopTimes.StopTimeColumns.TRIP_ID + "," +
+                    StopTimes.StopTimeColumns.ARRIVAL_TIME + "," +
+                    StopTimes.StopTimeColumns.DEPARTURE_TIME + "," +
+                    StopTimes.StopTimeColumns.STOP_ID + "," +
+                    StopTimes.StopTimeColumns.STOP_SEQUENCE +
+                    ") VALUES (?,?,?,?,?)";
+            SQLiteStatement insert = database.compileStatement(sql);
+            for (int i = 0; i < stopTimes.size(); i++) {
+                StopTime item = stopTimes.get(i);
+                insert.bindLong(1, item.getTripId());
+                insert.bindString(2, item.getArrivalTime());
+                insert.bindString(3, item.getDepartureTme());
+                insert.bindLong(4, item.getStopId());
+                insert.bindString(5, item.getStopSequence());
+                Log.d("STARX", i + " -- stoptime added");
+                insert.execute();
+            }
+            database.setTransactionSuccessful();
+            Log.d("STARX", stopTimes.size() + " stoptimes added ----------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            database.endTransaction();
+        }
     }
 
     /**
@@ -244,11 +280,11 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             e.printStackTrace();
         }
         long count = 0;
-        for (StopTime item : items) {
+       /* for (StopTime item : items) {
             count++;
             Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertStopTime(item);
-        }
+            insertStopTimes(item);
+        }*/
     }
 
     /**
@@ -407,43 +443,55 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @return
      * @throws IOException
      */
-    public static ArrayList<StopTime> loadStopTimesData() throws IOException {
+    public ArrayList<StopTime> loadStopTimesData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + "/" + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
         ArrayList<StopTime> stopTimes = new ArrayList<>();
-        int i = 0;
-        int nb_files = splitStopTimesFile();
+        ArrayList<StopTime> fileStopTimes = new ArrayList<>();
+        long items = 0;
         long allStoptimes = 0;
 
-        for (int id=1;id<=nb_files; id++){
-            String currfile = INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_SPLIT_CSV_FILE + id + ".txt";
-            Log.d("STARX", "current file ..: " + currfile);
-            FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, currfile));
-            BufferedReader buffer = new BufferedReader(file);
-            String line = "";
-            while ((line = buffer.readLine()) != null) {
-                if (i != 0) {
-                    String[] str = line.split(",");
-                    int tripId = Integer.valueOf(str[0].replaceAll("\"", ""));
-                    int stopId = Integer.valueOf(str[3].replaceAll("\"", ""));
-                    StopTime stopTime = new StopTime(
-                            tripId, str[1].replaceAll("\"", ""),
-                            str[2].replaceAll("\"", ""),
-                            stopId,
-                            str[4].replaceAll("\"", ""));
-                    stopTimes.add(stopTime);
-                    Log.d("STARXST", i + "-loaded... " + stopTime.toString());
-                }
-                i++;
+        /**
+         * A décommenter si le gros fichier ne peut pas être traité
+         * Prend plus temps
+         */
+//        int nb_files = splitStopTimesFile();
+//        for (int id=1;id<=nb_files; id++){
+        String currfile = INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE;
+        Log.d("STARX", "current file ..: " + currfile);
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, currfile));
+        BufferedReader buffer = new BufferedReader(file);
+        String line = "";
+        long nb = 0;
+        while ((line = buffer.readLine()) != null) {
+            if (nb != 0) {
+                String[] str = line.split(",");
+                int tripId = Integer.valueOf(str[0].replaceAll("\"", ""));
+                int stopId = Integer.valueOf(str[3].replaceAll("\"", ""));
+                StopTime stopTime = new StopTime(
+                        tripId, str[1].replaceAll("\"", ""),
+                        str[2].replaceAll("\"", ""),
+                        stopId,
+                        str[4].replaceAll("\"", ""));
+                fileStopTimes.add(stopTime);
+                Log.d("STARXST", items + "-loaded... " + stopTime.toString());
             }
-            buffer.close();
-            file.close();
-            allStoptimes += i;
-            Log.d("STARXST", i + " stopTimes loaded");
+            items++;
+            nb++;
         }
-        Log.d("STARXST", allStoptimes + " stopTimes loaded form the original file");
+        insertStopTimes(fileStopTimes);
+        Log.d("STARX", fileStopTimes.size() + "- StopTimes inserted ....");
+
+        buffer.close();
+        file.close();
+        allStoptimes += items;
+        Log.d("STARXST", items + " stopTimes loaded");
+
+        /**
+         * A décommenter si on l'a fait au dessus
+         */
+//        }
         return stopTimes;
     }
-
 
     public static int splitStopTimesFile() {
         int nb_of_files = 0;
@@ -453,7 +501,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             // Reading file and getting no. of files to be generated
 //            String inputfile = "C:/test.txt"; //  Source File Name.
             double lines_per_file = 50000.0; //  No. of lines to be split and saved in each output file.
-            File file = new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH+"/"+STOP_TIMES_CSV_FILE);
+            File file = new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
             Scanner scanner = new Scanner(file);
             int count = 0;
             while (scanner.hasNextLine()) {
@@ -480,20 +528,19 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             // Actual splitting of file into smaller files
 
 //            FileInputStream fstream = new FileInputStream(inputfile);
-            FileInputStream fstream = new FileInputStream(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH +DOWNLOAD_PATH+ "/"+STOP_TIMES_CSV_FILE));
+            FileInputStream fstream = new FileInputStream(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE));
             DataInputStream in = new DataInputStream(fstream);
 
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String strLine;
 
             for (int j = 1; j <= nb_of_files; j++) {
-//                FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE));
-
-//                FileWriter fstream1 = new FileWriter("C:/New Folder/File" + j + ".txt");     // Destination File Location
-                FileWriter fstream1 = new FileWriter(DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + STOP_TIMES_SPLIT_CSV_FILE + j + ".txt");     // Destination File Location
+                FileWriter fstream1 = new FileWriter(DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_SPLIT_CSV_FILE + j + ".txt");     // Destination File Location
                 BufferedWriter out = new BufferedWriter(fstream1);
-                out.write(headerLine);
-                out.newLine();
+                if (j != 1) {
+                    out.write(headerLine);
+                    out.newLine();
+                }
                 for (int i = 1; i <= lines_per_file; i++) {
                     strLine = br.readLine();
                     if (strLine != null) {

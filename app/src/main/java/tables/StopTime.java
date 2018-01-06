@@ -70,4 +70,8 @@ public class StopTime {
                 ", StopSequence:'" + StopSequence + '\'' +
                 '}';
     }
+
+    public String sql() {
+        return "("+tripId+",'"+arrivalTime+"','"+departureTme+"',"+stopId+",'"+StopSequence+"')";
+    }
 }

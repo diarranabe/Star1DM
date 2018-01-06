@@ -57,8 +57,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);*/
 
-//        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
-//        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
+        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
+        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
 //        databaseHelper.insertAll();
 //        databaseHelper.insertTrips();
         databaseHelper.insertStopTimes();
