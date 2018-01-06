@@ -114,7 +114,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 //        insertCalendars();
 //        insertStops();
 //        insertTrips();
-        insertStopTimes();
+//        insertStopTimes();
     }
 
     /**
@@ -140,16 +140,42 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      */
     public void insertBusRoutes() {
         ArrayList<tables.BusRoute> items = new ArrayList<tables.BusRoute>();
+        database = this.getWritableDatabase();
         try {
             items = loadBusRoutesData();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        long count = 0;
-        for (tables.BusRoute item : items) {
-            count++;
-            Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertRoute(item);
+        try {
+            database.beginTransaction();
+            String sql = "INSERT INTO " + StarContract.BusRoutes.CONTENT_PATH + " (" +
+                    BusRoutes.BusRouteColumns.ROUTE_ID + "," +
+                    BusRoutes.BusRouteColumns.SHORT_NAME + "," +
+                    BusRoutes.BusRouteColumns.LONG_NAME + "," +
+                    BusRoutes.BusRouteColumns.DESCRIPTION + "," +
+                    BusRoutes.BusRouteColumns.TYPE + "," +
+                    BusRoutes.BusRouteColumns.COLOR + "," +
+                    BusRoutes.BusRouteColumns.TEXT_COLOR +
+                    ") VALUES (?,?,?,?,?,?,?)";
+            SQLiteStatement insert = database.compileStatement(sql);
+            for (int i = 0; i < items.size(); i++) {
+                tables.BusRoute item = items.get(i);
+                insert.bindString(1, item.getRoute_id());
+                insert.bindString(2, item.getShortName());
+                insert.bindString(3, item.getLongName());
+                insert.bindString(4, item.getDescription());
+                insert.bindString(5, item.getType());
+                insert.bindString(6, item.getColor());
+                insert.bindString(7, item.getTextColor());
+                Log.d("STARX", i + " -- BusRoute added");
+                insert.execute();
+            }
+            database.setTransactionSuccessful();
+            Log.d("STARX", items.size() + " BusRoute added ----------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            database.endTransaction();
         }
     }
 
@@ -176,11 +202,37 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        long count = 0;
-        for (Trip item : items) {
-            count++;
-            Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertTrip(item);
+        try {
+            database = this.getWritableDatabase();
+            database.beginTransaction();
+            String sql = "INSERT INTO " + StarContract.Trips.CONTENT_PATH + " (" +
+                    Trips.TripColumns.TRIP_ID+ "," +
+                    Trips.TripColumns.ROUTE_ID+ "," +
+                    Trips.TripColumns.SERVICE_ID+ "," +
+                    Trips.TripColumns.HEADSIGN+ "," +
+                    Trips.TripColumns.DIRECTION_ID+ "," +
+                    Trips.TripColumns.BLOCK_ID+ "," +
+                    Trips.TripColumns.WHEELCHAIR_ACCESSIBLE+
+                    ") VALUES (?,?,?,?,?,?,?)";
+            SQLiteStatement insert = database.compileStatement(sql);
+            for (int i = 0; i < items.size(); i++) {
+                tables.Trip item = items.get(i);
+                insert.bindLong(1, item.getTripId());
+                insert.bindLong(2, item.getRouteId());
+                insert.bindLong(3, item.getServiceId());
+                insert.bindString(4, item.getHeadSign());
+                insert.bindLong(5, item.getDirectionId());
+                insert.bindString(6, item.getBlockId());
+                insert.bindString(7, item.getWheelchairAccessible());
+                Log.d("STARX", i + " -- Trips added");
+                insert.execute();
+            }
+            database.setTransactionSuccessful();
+            Log.d("STARX", items.size() + " Calendar added ----------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            database.endTransaction();
         }
     }
 
@@ -212,11 +264,35 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        long count = 0;
-        for (tables.Stop item : items) {
-            count++;
-            Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertStop(item);
+        try {
+            database = this.getWritableDatabase();
+            database.beginTransaction();
+            String sql = "INSERT INTO " + StarContract.Stops.CONTENT_PATH + " (" +
+                    Stops.StopColumns.STOP_ID + "," +
+                    Stops.StopColumns.NAME + "," +
+                    Stops.StopColumns.DESCRIPTION + "," +
+                    Stops.StopColumns.LATITUDE + "," +
+                    Stops.StopColumns.LONGITUDE + "," +
+                    Stops.StopColumns.WHEELCHAIR_BOARDING +
+                    ") VALUES (?,?,?,?,?,?)";
+            SQLiteStatement insert = database.compileStatement(sql);
+            for (int i = 0; i < items.size(); i++) {
+                tables.Stop item = items.get(i);
+                insert.bindString(1, item.getId());
+                insert.bindString(2, item.getName());
+                insert.bindString(3, item.getDescription());
+                insert.bindLong(4, (long) item.getLatitude());
+                insert.bindLong(5, (long) item.getLongitude());
+                insert.bindString(6, item.getWheelChairBoalding());
+                Log.d("STARX", i + " -- Stops added");
+                insert.execute();
+            }
+            database.setTransactionSuccessful();
+            Log.d("STARX", items.size() + " Stops added ----------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            database.endTransaction();
         }
     }
 
@@ -251,7 +327,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                     ") VALUES (?,?,?,?,?)";
             SQLiteStatement insert = database.compileStatement(sql);
             for (int i = 0; i < stopTimes.size(); i++) {
-                StopTime item = stopTimes.get(i);
+                tables.StopTime item = stopTimes.get(i);
                 insert.bindLong(1, item.getTripId());
                 insert.bindString(2, item.getArrivalTime());
                 insert.bindString(3, item.getDepartureTme());
@@ -267,24 +343,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } finally {
             database.endTransaction();
         }
-    }
-
-    /**
-     * Insert all StopTimes from the csv file to the db
-     */
-    public void insertStopTimes() {
-        ArrayList<tables.StopTime> items = new ArrayList<tables.StopTime>();
-        try {
-            items = loadStopTimesData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        long count = 0;
-       /* for (StopTime item : items) {
-            count++;
-            Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertStopTimes(item);
-        }*/
     }
 
     /**
@@ -318,11 +376,43 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        long count = 0;
-        for (tables.Calendar item : items) {
-            count++;
-            Log.d("STARX", count + "-Inserting ...." + item.toString());
-            insertCalendar(item);
+        try {
+            database = this.getWritableDatabase();
+            database.beginTransaction();
+            String sql = "INSERT INTO " + StarContract.Calendar.CONTENT_PATH + " (" +
+                    Calendar.CalendarColumns.SERVICE_ID + "," +
+                    Calendar.CalendarColumns.MONDAY + "," +
+                    Calendar.CalendarColumns.TUESDAY + "," +
+                    Calendar.CalendarColumns.WEDNESDAY + "," +
+                    Calendar.CalendarColumns.THURSDAY + "," +
+                    Calendar.CalendarColumns.FRIDAY + "," +
+                    Calendar.CalendarColumns.SATURDAY + "," +
+                    Calendar.CalendarColumns.SUNDAY + "," +
+                    Calendar.CalendarColumns.START_DATE + "," +
+                    Calendar.CalendarColumns.END_DATE +
+                    ") VALUES (?,?,?,?,?,?,?,?,?,?)";
+            SQLiteStatement insert = database.compileStatement(sql);
+            for (int i = 0; i < items.size(); i++) {
+                tables.Calendar item = items.get(i);
+                insert.bindLong(1, item.getService_id());
+                insert.bindString(2, item.getMonday());
+                insert.bindString(3, item.getTuesday());
+                insert.bindString(4, item.getWednesday());
+                insert.bindString(5, item.getThursday());
+                insert.bindString(6, item.getFriday());
+                insert.bindString(7, item.getSaturday());
+                insert.bindString(8, item.getSunday());
+                insert.bindString(9, item.getStartDate());
+                insert.bindString(10, item.getEndDate());
+                Log.d("STARX", i + " -- Calendar added");
+                insert.execute();
+            }
+            database.setTransactionSuccessful();
+            Log.d("STARX", items.size() + " Calendar added ----------------------------------------");
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            database.endTransaction();
         }
     }
 
@@ -333,8 +423,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public static ArrayList<tables.Calendar> loadCalendarData() throws IOException {
-
-
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE);
         ArrayList<tables.Calendar> calendars = new ArrayList<>();
         FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE));
@@ -443,9 +531,8 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @return
      * @throws IOException
      */
-    public ArrayList<StopTime> loadStopTimesData() throws IOException {
+    public void loadStopTimesData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + "/" + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
-        ArrayList<StopTime> stopTimes = new ArrayList<>();
         ArrayList<StopTime> fileStopTimes = new ArrayList<>();
         long items = 0;
         long allStoptimes = 0;
@@ -490,7 +577,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
          * A décommenter si on l'a fait au dessus
          */
 //        }
-        return stopTimes;
     }
 
     public static int splitStopTimesFile() {

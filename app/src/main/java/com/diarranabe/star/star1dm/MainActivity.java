@@ -57,15 +57,12 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);*/
 
-        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
-        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
-//        databaseHelper.insertAll();
-//        databaseHelper.insertTrips();
-        databaseHelper.insertStopTimes();
-        testStopTimesProvider();
-//        getBusRoutesFromProvider();
-//        databaseHelper.insertCalendars();
-//        testCalendarProvider();
+        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
+        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
+        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
+
+        databaseHelper.insertTrips();
+        testTripsProvider();
 //        testTripsProvider();
         Log.d("STARX", "end");
 
@@ -74,23 +71,23 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Losrqu'on clic sur la notif de mise à jour
+     *
      * @param intent
      */
-    public void onNewIntent(Intent intent){
+    public void onNewIntent(Intent intent) {
         Bundle extras = intent.getExtras();
-        if(extras != null){
-            if(extras.containsKey(getString(R.string.data1_url_id))
+        if (extras != null) {
+            if (extras.containsKey(getString(R.string.data1_url_id))
                     && extras.containsKey(getString(R.string.data2_url_id))
                     && extras.containsKey(getString(R.string.data1_date_id))
                     && extras.containsKey(getString(R.string.data2_date_id))
-                    )
-            {
+                    ) {
                 String file1 = extras.getString(getString(R.string.data1_url_id));
-                String file2= extras.getString(getString(R.string.data2_url_id));
-                String date1= extras.getString(getString(R.string.data1_date_id));
-                String date2= extras.getString(getString(R.string.data2_date_id));
-                Log.d("STARX", " notif msg : "+file1+", date: "+date1);
-                Log.d("STARX", " notif msg : "+file2+", date: "+date2);
+                String file2 = extras.getString(getString(R.string.data2_url_id));
+                String date1 = extras.getString(getString(R.string.data1_date_id));
+                String date2 = extras.getString(getString(R.string.data2_date_id));
+                Log.d("STARX", " notif msg : " + file1 + ", date: " + date1);
+                Log.d("STARX", " notif msg : " + file2 + ", date: " + date2);
 
                 // Telecharger et Ajouter les nouvelles données
                 downZip(file1);
@@ -172,12 +169,12 @@ public class MainActivity extends AppCompatActivity {
 
                     //Splitting a File Name from SourceFileName
                     String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
-                    DatabaseHelper.INIT_FOLDER_PATH = "star1dm/" + DestinationName.substring(0,DestinationName.lastIndexOf("."))+"/";
+                    DatabaseHelper.INIT_FOLDER_PATH = "star1dm/" + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
                     //Saving a File into Download Folder
                     File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
                     String INIT_FOLDER_PATH = "star1dm/";
 
-                    File file = new File((DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH));
+                    File file = new File((DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH));
 
                     File _f = new File(file, DestinationName);
 
@@ -339,15 +336,15 @@ public class MainActivity extends AppCompatActivity {
         Log.d("STARX", "Test BusRoutesProvider");
         Uri ur = Uri.parse("content://fr.istic.starproviderDM");
 
-        Uri uri = Uri.withAppendedPath(ur, "busroute/0002/");
+        Uri uri = Uri.withAppendedPath(ur, "busroute/");
 
 //        uri.
 //        Uri uri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.BusRoutes.CONTENT_PATH + "/0006");
-        String[] args = {"nf"};
-        Cursor cursor = managedQuery(uri,
-                null, null, args,
+        Cursor cursor = getContentResolver().query(uri,
+                null, null, null,
                 StarContract.BusRoutes.BusRouteColumns.ROUTE_ID);
 
+        int i =0 ;
         if (cursor.moveToFirst()) {
             do {
                 tables.BusRoute item = new tables.BusRoute(
@@ -359,8 +356,9 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.COLOR)),
                         cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
                 );
+                i++;
 //                Log.d("STARXTEST", "Received from provider ..." + cursor.getString(cursor.getColumnIndex(StarContract.Trip.TripColumns.WHEELCHAIR_ACCESSIBLE)));
-                Log.d("STARXTEST", "Received from provider ..." + item);
+                Log.d("STARXTEST", i+"-Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
@@ -372,6 +370,7 @@ public class MainActivity extends AppCompatActivity {
                 null, null, null,
                 StarContract.Trips.TripColumns.ROUTE_ID);
 
+        int i = 0;
         if (cursor.moveToFirst()) {
             do {
                 Trip item = new Trip(
@@ -383,14 +382,15 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.BLOCK_ID)),
                         cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.WHEELCHAIR_ACCESSIBLE))
                 );
-                Log.d("STARXTEST", "Received from provider ..." + item);
+                i++;
+                Log.d("STARXTEST", i+"-Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
 
     public void testCalendarProvider() {
         // Retrieve student records
-        Uri calendarUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Calendar.CONTENT_PATH + "/20171109");
+        Uri calendarUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Calendar.CONTENT_PATH + "");
         Cursor cursor = managedQuery(calendarUri,
                 null, null, null,
                 StarContract.Calendar.CalendarColumns.START_DATE);
@@ -410,14 +410,14 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.START_DATE)),
                         cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.END_DATE))
                 );
-                Log.d("STARXCA", count+"-Received from provider ..." + item);
+                Log.d("STARXCA", count + "-Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
 
     public void testStopsProvider() {
         // Retrieve student records
-        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "/6000");
+        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "");
         Cursor cursor = managedQuery(stopsUri,
                 null, null, null,
                 StarContract.Stops.StopColumns.STOP_ID);
@@ -454,7 +454,7 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
                         cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
                 );
-                Log.d("STARXTEST", count+"Received from provider ..." + item);
+                Log.d("STARXTEST", count + "Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
