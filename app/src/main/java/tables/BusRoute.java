@@ -25,16 +25,6 @@ public class BusRoute {
         this.textColor = textColor;
     }
 
-    /*public BusRoute(String shortName, String longName, String description, String type, String color, String textColor) {
-        this.shortName = shortName;
-        this.longName = longName;
-        this.description = description;
-        this.type = type;
-        this.color = color;
-        this.textColor = textColor;
-    }*/
-
-
 
     public String getShortName() {
         return shortName;
@@ -95,13 +85,13 @@ public class BusRoute {
     @Override
     public String toString() {
         return "BusRoute{" +
-                "route_id='" + route_id + '\'' +
-                ", shortName='" + shortName + '\'' +
-                ", longName='" + longName + '\'' +
-                ", description='" + description + '\'' +
-                ", type='" + type + '\'' +
-                ", color='" + color + '\'' +
-                ", textColor='" + textColor + '\'' +
+                "route_id:'" + route_id + '\'' +
+                ", shortName:'" + shortName + '\'' +
+                ", longName:'" + longName + '\'' +
+                ", description:'" + description + '\'' +
+                ", type:'" + type + '\'' +
+                ", color:'" + color + '\'' +
+                ", textColor:'" + textColor + '\'' +
                 '}';
     }
 

@@ -17,6 +17,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -28,7 +32,9 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class CheckStarDataService extends Service {
-//        private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+    private static final long DELAY = 5000;
+    private static final long PERIOD = 50000;
+    //        private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 //    private String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
     private long attempt = 0;
     private String DATA_URL1 = "";
@@ -77,7 +83,7 @@ public class CheckStarDataService extends Service {
                 });
             }
         };
-        timer.schedule(doAsynchronousTask, 1000, 5000); //execute in every 50000 ms
+        timer.schedule(doAsynchronousTask, DELAY, PERIOD); //execute in every 50000 ms
     }
 
     private void notifyActivity() {
@@ -124,59 +130,94 @@ public class CheckStarDataService extends Service {
     public void getVersionsInfos() {
         Log.d("STARX", "version start a0 ");
         AsyncHttpClient client = new AsyncHttpClient();
-        client.get(Constants.DATA_SOURCE_URL, new JsonHttpResponseHandler() {
+        Log.d("STARX", "version start a1 ");
 
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("STARX", "version start ");
+        client.get(Constants.DATA_SOURCE_URL,
+                new JsonHttpResponseHandler() {
 
-                try {
-                    Log.d("STARX", "start new data");
-                    JSONArray reords = response.getJSONArray("records");
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                        Log.d("STARX", "version start ");
 
-                    /**
-                     * Traitement du premier fichier
-                     */
-                    JSONObject file1 = (JSONObject) reords.get(0);
-                    JSONObject file12 = (JSONObject) file1.get("fields");
-                    JSONObject fichier1 = (JSONObject) file12.get("fichier");
-                    String last_sync1 = (String) fichier1.get("last_synchronized");
-                    String newData1 = file12.get("url").toString();
+                        try {
+                            Log.d("STARX", "start new data");
+                            JSONArray reords = response.getJSONArray("records");
 
-                    /**
-                     * Traitement du second fichier
-                     */
-                    JSONObject file2 = (JSONObject) reords.get(1);
-                    JSONObject file22 = (JSONObject) file2.get("fields");
-                    JSONObject fichier2 = (JSONObject) file22.get("fichier");
-                    String last_sync2 = (String) fichier2.get("last_synchronized");
-                    String newData2 = file22.get("url").toString();
 
-                    ArrayList<String> versions = DatabaseHelper.getVersions(getApplicationContext());
-                    if (!(versions.get(0).equals(last_sync1)) || !(versions.get(1).equals(last_sync2))) {
-                        DATA_URL1 = newData1;
-                        DATA_URL2 = newData2;
-                        DATA_URL1_LAST_UPDATE = last_sync1;
-                        DATA_URL2_LAST_UPDATE = last_sync2;
-                        notifyActivity();
-                        Log.d("STARX", "new data url1: " + DATA_URL1 + ", date: " + DATA_URL1_LAST_UPDATE);
-                        Log.d("STARX", "new data url1: " + DATA_URL2 + ", date: " + DATA_URL2_LAST_UPDATE);
+                            /**
+                             *Traitement du premier fichier
+                             */
+                            JSONObject file1 = (JSONObject) reords.get(0);
+                            JSONObject file12 = (JSONObject) file1.get("fields");
+                            JSONObject fichier1 = (JSONObject) file12.get("fichier");
+                            String last_sync1 = (String) fichier1.get("last_synchronized");
+                            String newData1 = file12.get("url").toString();
+                            Log.d("STARX", "start new data1 -- " + newData1);
+                            
+                            /**
+                             * Traitement du second fichier
+                             */
+                            JSONObject file2 = (JSONObject) reords.get(1);
+                            JSONObject file22 = (JSONObject) file2.get("fields");
+                            JSONObject fichier2 = (JSONObject) file22.get("fichier");
+                            String last_sync2 = (String) fichier2.get("last_synchronized");
+                            String newData2 = file22.get("url").toString();
+                            Log.d("STARX", "start new data2 -- " + newData2);
+
+                            ArrayList<String> versions = DatabaseHelper.getVersions(getApplicationContext());
+                            if (!(versions.get(0).equals(last_sync1)) || !(versions.get(1).equals(last_sync2))) {
+                                DATA_URL1 = newData1;
+                                DATA_URL2 = newData2;
+                                DATA_URL1_LAST_UPDATE = last_sync1;
+                                DATA_URL2_LAST_UPDATE = last_sync2;
+                                notifyActivity();
+                                Log.d("STARX", "new data url1: " + DATA_URL1 + ", date: " + DATA_URL1_LAST_UPDATE);
+                                Log.d("STARX", "new data url1: " + DATA_URL2 + ", date: " + DATA_URL2_LAST_UPDATE);
+                            }
+                            Log.d("STARX", "database is up to date ");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+                        //Json object is returned as a response
                     }
-                    Log.d("STARX", "database is up to date ");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
 
-                //Json object is returned as a response
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                        super.onFailure(statusCode, headers, responseString, throwable);
+                        Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
+                    }
+                });
+
+    }
+
+
+    /**
+     * @param in      : buffer with the php result
+     * @param bufSize : size of the buffer
+     * @return : the string corresponding to the buffer
+     */
+    public static String InputStreamToString(InputStream in, int bufSize) {
+        final StringBuilder out = new StringBuilder();
+        final byte[] buffer = new byte[bufSize];
+        try {
+            for (int ctr; (ctr = in.read(buffer)) != -1; ) {
+                out.append(new String(buffer, 0, ctr));
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Ne peut pas convertir un stream en string", e);
+        }
+        // On retourne la chaine contenant les donnees de l'InputStream
+        return out.toString();
+    }
 
-            @Override
-            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
-                super.onFailure(statusCode, headers, responseString, throwable);
-                Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
-            }
-        });
-
+    /**
+     * @param in : buffer with the php result
+     * @return : the string corresponding to the buffer
+     */
+    public static String InputStreamToString(InputStream in) {
+        // On appelle la methode precedente avec une taille de buffer par defaut
+        return InputStreamToString(in, 1024);
     }
 
 }

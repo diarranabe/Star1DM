@@ -15,7 +15,8 @@ public class Constants implements StarContract {
             BusRoutes.BusRouteColumns.TEXT_COLOR + " TEXT );";
 
     public static final String CREATE_TRIPS_TABLE = "CREATE TABLE IF NOT EXISTS " + Trips.CONTENT_PATH +
-            "(" + Trips.TripColumns.ROUTE_ID + " INTEGER  NOT NULL PRIMARY KEY," +
+            "(" + Trips.TripColumns.TRIP_ID + " INTEGER  NOT NULL PRIMARY KEY," +
+            Trips.TripColumns.ROUTE_ID + " INTEGER," +
             Trips.TripColumns.SERVICE_ID + " INTEGER," +
             Trips.TripColumns.HEADSIGN + " TEXT," +
             Trips.TripColumns.DIRECTION_ID + " INTEGER," +
@@ -31,7 +32,7 @@ public class Constants implements StarContract {
             Stops.StopColumns.WHEELCHAIR_BOARDING + " TEXT );";
 
     public static final String CREATE_STOP_TIMES_TABLE = "CREATE TABLE IF NOT EXISTS " + StarContract.StopTimes.CONTENT_PATH +
-            "(" + StarContract.StopTimes.StopTimeColumns.TRIP_ID + " INTEGER NOT NULL PRIMARY KEY," +
+            "(" + StarContract.StopTimes.StopTimeColumns.TRIP_ID + " INTEGER," +
             StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME + " TEXT," +
             StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME + " TEXT," +
             StarContract.StopTimes.StopTimeColumns.STOP_ID + " INTEGER," +
@@ -39,7 +40,8 @@ public class Constants implements StarContract {
 
 
     public static final String CREATE_CALENDAR_TABLE = "CREATE TABLE IF NOT EXISTS " + Calendar.CONTENT_PATH +
-            "(" + Calendar.CalendarColumns.MONDAY + " TEXT , " +
+            "(" + Calendar.CalendarColumns.SERVICE_ID + " INTEGER," +
+            Calendar.CalendarColumns.MONDAY + " TEXT," +
             Calendar.CalendarColumns.TUESDAY + " TEXT," +
             Calendar.CalendarColumns.WEDNESDAY + " TEXT," +
             Calendar.CalendarColumns.THURSDAY + " TEXT," +
@@ -68,4 +70,5 @@ public class Constants implements StarContract {
 
 
     public static String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
+//    public static String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
 }

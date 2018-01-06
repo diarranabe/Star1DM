@@ -7,6 +7,7 @@ package tables;
 public class Calendar {
 
 
+    private int service_id;
     private String monday;
     private String tuesday;
     private String wednesday;
@@ -17,7 +18,7 @@ public class Calendar {
     private String startDate;
     private String endDate;
 
-    public Calendar(String monday, String tuesday, String wednesday, String thursday, String friday, String saturday, String sunday, String startDate, String endDate) {
+   /* public Calendar(String monday, String tuesday, String wednesday, String thursday, String friday, String saturday, String sunday, String startDate, String endDate) {
         this.monday = monday;
         this.tuesday = tuesday;
         this.wednesday = wednesday;
@@ -27,6 +28,27 @@ public class Calendar {
         this.sunday = sunday;
         this.startDate = startDate;
         this.endDate = endDate;
+    }*/
+
+    public Calendar(int service_id, String monday, String tuesday, String wednesday, String thursday, String friday, String saturday, String sunday, String startDate, String endDate) {
+        this.service_id = service_id;
+        this.monday = monday;
+        this.tuesday = tuesday;
+        this.wednesday = wednesday;
+        this.thursday = thursday;
+        this.friday = friday;
+        this.saturday = saturday;
+        this.sunday = sunday;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public int getService_id() {
+        return service_id;
+    }
+
+    public void setService_id(int service_id) {
+        this.service_id = service_id;
     }
 
     public String getMonday() {
@@ -104,15 +126,16 @@ public class Calendar {
     @Override
     public String toString() {
         return "Calendar{" +
-                "monday='" + monday + '\'' +
-                ", tuesday='" + tuesday + '\'' +
-                ", wednesday='" + wednesday + '\'' +
-                ", thursday='" + thursday + '\'' +
-                ", friday='" + friday + '\'' +
-                ", saturday='" + saturday + '\'' +
-                ", sunday='" + sunday + '\'' +
-                ", startDate='" + startDate + '\'' +
-                ", endDate='" + endDate + '\'' +
+                "service_id:'" + service_id + '\'' +
+                ", monday:'" + monday + '\'' +
+                ", tuesday:'" + tuesday + '\'' +
+                ", wednesday:'" + wednesday + '\'' +
+                ", thursday:'" + thursday + '\'' +
+                ", friday:'" + friday + '\'' +
+                ", saturday:'" + saturday + '\'' +
+                ", sunday:'" + sunday + '\'' +
+                ", startDate:'" + startDate + '\'' +
+                ", endDate:'" + endDate + '\'' +
                 '}';
     }
 

@@ -63,12 +63,11 @@ public class StopTime {
     @Override
     public String toString() {
         return "StopTime{" +
-                "tripId=" + tripId +
-                ", arrivalTime='" + arrivalTime + '\'' +
-                ", departureTme='" + departureTme + '\'' +
-                ", stopId=" + stopId +
-                ", StopSequence='" + StopSequence + '\'' +
+                "tripId:" + tripId +
+                ", arrivalTime:'" + arrivalTime + '\'' +
+                ", departureTme:'" + departureTme + '\'' +
+                ", stopId:" + stopId +
+                ", StopSequence:'" + StopSequence + '\'' +
                 '}';
     }
-
 }

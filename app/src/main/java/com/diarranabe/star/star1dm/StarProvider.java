@@ -32,6 +32,7 @@ public class StarProvider extends ContentProvider implements StarContract {
     private static final int STOP_TIME_BY_ITEM_ID = 41;
     private static final int ALL_TRIPS_ID = 5;
     private static final int TRIP_BY_ITEM_ID = 51;
+    private static final int ROUTE_DETAILS = 6;
 
     private static final UriMatcher starUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 

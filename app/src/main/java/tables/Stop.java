@@ -13,8 +13,8 @@ public class Stop {
     private float longitude;
     private String wheelChairBoalding;
 
-    public Stop(String _id, String name, String description, float latitude, float longitude, String wheelChairBoalding) {
-        this.stop_id = _id;
+    public Stop(String stop_id, String name, String description, float latitude, float longitude, String wheelChairBoalding) {
+        this.stop_id = stop_id;
         this.name = name;
         this.description = description;
         this.latitude = latitude;
@@ -74,12 +74,12 @@ public class Stop {
     @Override
     public String toString() {
         return "Stop{" +
-                "id='" + stop_id + '\'' +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                ", wheelChairBoalding='" + wheelChairBoalding + '\'' +
+                "id:'" + stop_id + '\'' +
+                ", name:'" + name + '\'' +
+                ", description:'" + description + '\'' +
+                ", latitude:" + latitude +
+                ", longitude:" + longitude +
+                ", wheelChairBoalding:'" + wheelChairBoalding + '\'' +
                 '}';
     }
 

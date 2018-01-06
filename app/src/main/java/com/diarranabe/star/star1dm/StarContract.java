@@ -35,6 +35,7 @@ public interface StarContract {
         String CONTENT_ITEM_TYPE =
                 "vnd.android.cursor.item/vnd.fr.istic.starproviderdm.trip";
         interface TripColumns extends BaseColumns {
+            String TRIP_ID = "trip_id";
             String ROUTE_ID = "route_id";
             String SERVICE_ID = "service_id";
             String HEADSIGN = "trip_headsign";
@@ -94,6 +95,7 @@ public interface StarContract {
             String SUNDAY = "sunday";
             String START_DATE = "start_date";
             String END_DATE = "end_date";
+            String SERVICE_ID = "service_id";
         }
     }
 

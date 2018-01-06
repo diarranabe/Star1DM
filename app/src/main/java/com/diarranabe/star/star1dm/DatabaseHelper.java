@@ -9,15 +9,22 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 import tables.BusRoute;
 import tables.Stop;
 import tables.StopTime;
+import tables.Trip;
 
 import static android.os.Environment.getExternalStorageDirectory;
 
@@ -32,15 +39,17 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public SQLiteDatabase database;
     private static String DATA_NAME = "starBus";
     private static final int DATA_BASE_VERSION = 1;
-
     /**
      * Paths used to load csv files
      */
     public static String INIT_FOLDER_PATH = "star1dm/"; // From the root folder of the device
+    public static String DOWNLOAD_PATH = "GTFS_2017.4.0.3_2017-12-25_2018-01-07";
+
     private static String CALENDAR_CSV_FILE = "calendar.txt";
     private static String BUS_ROUTES_CSV_FILE = "routes.txt";
     private static String STOPS_CSV_FILE = "stops.txt";
     private static String STOP_TIMES_CSV_FILE = "stop_times.txt";
+    private static final String STOP_TIMES_SPLIT_CSV_FILE = "stop_times_";
     private static String TRIPS_CSV_FILE = "trips.txt";
 
     public DatabaseHelper(Context context) {
@@ -97,12 +106,12 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     /**
      * Insert toutes les données disponibles dans le dossier
      */
-    public void  insertAll(){
-        insertBusRoutes();
-        insertCalendars();
-        insertStops();
+    public void insertAll() {
+//        insertBusRoutes();
+//        insertCalendars();
+//        insertStops();
         insertTrips();
-        insertStopTimes();
+//        insertStopTimes();
     }
 
     /**
@@ -133,16 +142,19 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        long count = 0;
         for (tables.BusRoute item : items) {
-            Log.d("STARX", "Inserting ...." + item.toString());
+            count++;
+            Log.d("STARX", count + "-Inserting ...." + item.toString());
             insertRoute(item);
         }
     }
 
-    public void insertTrip(tables.Trips trip) {
+    public void insertTrip(Trip trip) {
         database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(Trips.TripColumns.BLOCK_ID, trip.getBlockId());
+        values.put(Trips.TripColumns.TRIP_ID, trip.getTripId());
+        values.put(Trips.TripColumns.ROUTE_ID, trip.getRouteId());
         values.put(Trips.TripColumns.SERVICE_ID, trip.getServiceId());
         values.put(Trips.TripColumns.HEADSIGN, trip.getHeadSign());
         values.put(Trips.TripColumns.DIRECTION_ID, trip.getDirectionId());
@@ -152,17 +164,19 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     }
 
     /**
-     * Insert all Trips from the csv file to the db
+     * Insert all Trip from the csv file to the db
      */
     public void insertTrips() {
-        ArrayList<tables.Trips> items = new ArrayList<tables.Trips>();
+        ArrayList<Trip> items = new ArrayList<Trip>();
         try {
             items = loadTripsData();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (tables.Trips item : items) {
-            Log.d("STARX", "Inserting ...." + item.toString());
+        long count = 0;
+        for (Trip item : items) {
+            count++;
+            Log.d("STARX", count+"-Inserting ...." + item.toString());
             insertTrip(item);
         }
     }
@@ -195,8 +209,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        long count = 0;
         for (tables.Stop item : items) {
-            Log.d("STARX", "Inserting ...." + item.toString());
+            count++;
+            Log.d("STARX", count + "-Inserting ...." + item.toString());
             insertStop(item);
         }
     }
@@ -227,8 +243,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        long count = 0;
         for (StopTime item : items) {
-            Log.d("STARX", "Inserting ...." + item.toString());
+            count++;
+            Log.d("STARX", count + "-Inserting ...." + item.toString());
             insertStopTime(item);
         }
     }
@@ -241,6 +259,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public void insertCalendar(tables.Calendar calendar) {
         database = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(Calendar.CalendarColumns.SERVICE_ID, calendar.getService_id());
         values.put(Calendar.CalendarColumns.MONDAY, calendar.getMonday());
         values.put(Calendar.CalendarColumns.TUESDAY, calendar.getTuesday());
         values.put(Calendar.CalendarColumns.WEDNESDAY, calendar.getWednesday());
@@ -263,8 +282,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        long count = 0;
         for (tables.Calendar item : items) {
-            Log.d("STARX", "Inserting ...." + item.toString());
+            count++;
+            Log.d("STARX", count + "-Inserting ...." + item.toString());
             insertCalendar(item);
         }
     }
@@ -276,9 +297,11 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public static ArrayList<tables.Calendar> loadCalendarData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH+CALENDAR_CSV_FILE);
+
+
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE);
         ArrayList<tables.Calendar> calendars = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + CALENDAR_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
@@ -286,7 +309,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             if (i != 0) {
                 String[] str = line.split(",");
                 tables.Calendar calendar = new tables.Calendar(
-                        str[0].replaceAll("\"", ""),
+                        Integer.valueOf(str[0].replaceAll("\"", "")),
                         str[1].replaceAll("\"", ""),
                         str[2].replaceAll("\"", ""),
                         str[3].replaceAll("\"", ""),
@@ -294,12 +317,15 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                         str[5].replaceAll("\"", ""),
                         str[6].replaceAll("\"", ""),
                         str[7].replaceAll("\"", ""),
-                        str[8].replaceAll("\"", ""));
+                        str[8].replaceAll("\"", ""),
+                        str[9].replaceAll("\"", ""));
                 calendars.add(calendar);
-                Log.d("STARXC", "loaded... " + calendar.toString());
+                Log.d("STARXC", i + "-loaded... " + calendar.toString());
             }
             i++;
         }
+        buffer.close();
+        file.close();
         Log.d("STARXC", i + " calendars loaded");
         return calendars;
     }
@@ -311,9 +337,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public static ArrayList<tables.BusRoute> loadBusRoutesData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH+BUS_ROUTES_CSV_FILE);
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + BUS_ROUTES_CSV_FILE);
         ArrayList<tables.BusRoute> busRoutes = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + BUS_ROUTES_CSV_FILE));
+//        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
@@ -329,10 +356,12 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                         str[7].replaceAll("\"", ""),
                         str[8].replaceAll("\"", ""));
                 busRoutes.add(br);
-                Log.d("STARXBR", "loaded... " + br.toString());
+                Log.d("STARXBR", i + "-loaded... " + br.toString());
             }
             i++;
         }
+        buffer.close();
+        file.close();
         Log.d("STARXBR", i + " busRoutes loaded");
         return busRoutes;
     }
@@ -344,9 +373,9 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public static ArrayList<tables.Stop> loadStopsData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH+STOPS_CSV_FILE);
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOPS_CSV_FILE);
         ArrayList<tables.Stop> stops = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + STOPS_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOPS_CSV_FILE));
         Log.e("STARXS", " Absolut Path for file" + file.toString());
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
@@ -360,12 +389,14 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                 float latitude = Float.valueOf(str[4].replace('"', ' '));
                 float longitude = Float.valueOf(str[5].replace('"', ' '));
                 String wheelChairBoalding = str[11].replaceAll("\"", "");
-                tables.Stop stop = new tables.Stop(id,name, description, latitude, longitude, wheelChairBoalding);
+                tables.Stop stop = new tables.Stop(id, name, description, latitude, longitude, wheelChairBoalding);
                 stops.add(stop);
-                Log.d("STARXS", "loaded... " + stop.toString());
+                Log.d("STARXS", i + "-loaded... " + stop.toString());
             }
             i++;
         }
+        buffer.close();
+        file.close();
         Log.d("STARXS", i + " stops loaded");
         return stops;
     }
@@ -377,41 +408,122 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public static ArrayList<StopTime> loadStopTimesData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH+STOP_TIMES_CSV_FILE);
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + "/" + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
         ArrayList<StopTime> stopTimes = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE));
-        BufferedReader buffer = new BufferedReader(file);
-        String line = "";
         int i = 0;
-        while ((line = buffer.readLine()) != null) {
-            if (i != 0) {
-                String[] str = line.split(",");
-                int tripId = Integer.valueOf(str[0].replaceAll("\"", ""));
-                int stopId = Integer.valueOf(str[3].replaceAll("\"", ""));
-                StopTime stopTime = new StopTime(
-                        tripId, str[1].replaceAll("\"", ""),
-                        str[2].replaceAll("\"", ""),
-                        stopId,
-                        str[4].replaceAll("\"", ""));
-                stopTimes.add(stopTime);
-                Log.d("STARXST", "loaded... " + stopTime.toString());
+        int nb_files = splitStopTimesFile();
+        long allStoptimes = 0;
+
+        for (int id=1;id<=nb_files; id++){
+            String currfile = INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_SPLIT_CSV_FILE + id + ".txt";
+            Log.d("STARX", "current file ..: " + currfile);
+            FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, currfile));
+            BufferedReader buffer = new BufferedReader(file);
+            String line = "";
+            while ((line = buffer.readLine()) != null) {
+                if (i != 0) {
+                    String[] str = line.split(",");
+                    int tripId = Integer.valueOf(str[0].replaceAll("\"", ""));
+                    int stopId = Integer.valueOf(str[3].replaceAll("\"", ""));
+                    StopTime stopTime = new StopTime(
+                            tripId, str[1].replaceAll("\"", ""),
+                            str[2].replaceAll("\"", ""),
+                            stopId,
+                            str[4].replaceAll("\"", ""));
+                    stopTimes.add(stopTime);
+                    Log.d("STARXST", i + "-loaded... " + stopTime.toString());
+                }
+                i++;
             }
-            i++;
+            buffer.close();
+            file.close();
+            allStoptimes += i;
+            Log.d("STARXST", i + " stopTimes loaded");
         }
-        Log.d("STARXST", i + " stopTimes loaded");
+        Log.d("STARXST", allStoptimes + " stopTimes loaded form the original file");
         return stopTimes;
     }
 
+
+    public static int splitStopTimesFile() {
+        int nb_of_files = 0;
+        String headerLine = "";
+
+        try {
+            // Reading file and getting no. of files to be generated
+//            String inputfile = "C:/test.txt"; //  Source File Name.
+            double lines_per_file = 50000.0; //  No. of lines to be split and saved in each output file.
+            File file = new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH+"/"+STOP_TIMES_CSV_FILE);
+            Scanner scanner = new Scanner(file);
+            int count = 0;
+            while (scanner.hasNextLine()) {
+                if (count == 0) {
+                    headerLine = scanner.nextLine();
+                } else {
+                    scanner.nextLine();
+                }
+                count++;
+            }
+            System.out.println("Lines in the StopTimes file: " + count);     // Displays no. of lines in the input file.
+
+            double temp = (count / lines_per_file);
+            int temp1 = (int) temp;
+            if (temp1 == temp) {
+                nb_of_files = temp1;
+            } else {
+                nb_of_files = temp1 + 1;
+            }
+            System.out.println("No. of files to be generated :" + nb_of_files); // Displays no. of files to be generated.
+
+            //---------------------------------------------------------------------------------------------------------
+
+            // Actual splitting of file into smaller files
+
+//            FileInputStream fstream = new FileInputStream(inputfile);
+            FileInputStream fstream = new FileInputStream(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH +DOWNLOAD_PATH+ "/"+STOP_TIMES_CSV_FILE));
+            DataInputStream in = new DataInputStream(fstream);
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine;
+
+            for (int j = 1; j <= nb_of_files; j++) {
+//                FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE));
+
+//                FileWriter fstream1 = new FileWriter("C:/New Folder/File" + j + ".txt");     // Destination File Location
+                FileWriter fstream1 = new FileWriter(DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + STOP_TIMES_SPLIT_CSV_FILE + j + ".txt");     // Destination File Location
+                BufferedWriter out = new BufferedWriter(fstream1);
+                out.write(headerLine);
+                out.newLine();
+                for (int i = 1; i <= lines_per_file; i++) {
+                    strLine = br.readLine();
+                    if (strLine != null) {
+                        out.write(strLine);
+                        if (i != lines_per_file) {
+                            out.newLine();
+                        }
+                    }
+                }
+                out.close();
+            }
+
+            in.close();
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+        }
+        return nb_of_files;
+    }
+
+
     /**
-     * Loads Trips from the csv file
+     * Loads Trip from the csv file
      *
      * @return
      * @throws IOException
      */
-    public static ArrayList<tables.Trips> loadTripsData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER+"/"+INIT_FOLDER_PATH+ TRIPS_CSV_FILE);
-        ArrayList<tables.Trips> trips = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + TRIPS_CSV_FILE));
+    public static ArrayList<Trip> loadTripsData() throws IOException {
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + TRIPS_CSV_FILE);
+        ArrayList<Trip> trips = new ArrayList<>();
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + TRIPS_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
@@ -419,26 +531,31 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             if (i != 0) {
                 String[] str = line.split(",");
                 int routeId = Integer.valueOf(str[0].replaceAll("\"", ""));
+                int tripId = Integer.valueOf(str[2].replaceAll("\"", ""));
                 int serviceId = Integer.valueOf(str[1].replaceAll("\"", ""));
                 int direction = Integer.valueOf(str[5].replaceAll("\"", ""));
                 String block = str[6].replaceAll("\"", "");
-                tables.Trips trip = new tables.Trips(routeId,
+                Trip trip = new Trip(tripId,
+                        routeId,
                         serviceId,
                         str[3].replaceAll("\"", ""),
                         direction,
                         block,
                         str[8].replaceAll("\"", ""));
                 trips.add(trip);
-                Log.d("STARXT", "loaded... " + trip.toString());
+                Log.d("STARXT", i + "-loaded... " + trip.toString());
             }
             i++;
         }
+        buffer.close();
+        file.close();
         Log.d("STARXT", i + " trips loaded");
         return trips;
     }
 
     /**
      * Load BusRoutes from database
+     *
      * @return
      */
     public ArrayList<tables.BusRoute> getBusRoutesFromDatabase() {
@@ -467,6 +584,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 
     /**
      * Load Calendars from database
+     *
      * @return
      */
     public ArrayList<tables.Calendar> getCalendarsFromDatabase() {
@@ -476,15 +594,16 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         if (cursor.moveToFirst()) {
             do {
                 tables.Calendar item = new tables.Calendar(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getString(3),
-                        cursor.getString(4),
-                        cursor.getString(5),
-                        cursor.getString(6),
-                        cursor.getString(7),
-                        cursor.getString(8)
+                        cursor.getInt(cursor.getColumnIndex(Calendar.CalendarColumns.SERVICE_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.MONDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.TUESDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.WEDNESDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.THURSDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.FRIDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.SATURDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.SUNDAY)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.START_DATE)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.END_DATE))
                 );
                 data.add(item);
                 Log.d("STARX", "load from db..." + item);
@@ -497,6 +616,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 
     /**
      * Load Stops from database
+     *
      * @return
      */
     public ArrayList<tables.Stop> getStopsFromDatabase() {
@@ -506,12 +626,12 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         if (cursor.moveToFirst()) {
             do {
                 tables.Stop item = new tables.Stop(
-                        cursor.getString(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getFloat(3),
-                        cursor.getFloat(4),
-                        cursor.getString(5)
+                        cursor.getString(cursor.getColumnIndex(Stops.StopColumns.STOP_ID)),
+                        cursor.getString(cursor.getColumnIndex(Stops.StopColumns.NAME)),
+                        cursor.getString(cursor.getColumnIndex(Stops.StopColumns.DESCRIPTION)),
+                        cursor.getFloat(cursor.getColumnIndex(Stops.StopColumns.LATITUDE)),
+                        cursor.getFloat(cursor.getColumnIndex(Stops.StopColumns.LONGITUDE)),
+                        cursor.getString(cursor.getColumnIndex(Stops.StopColumns.WHEELCHAIR_BOARDING))
                 );
                 data.add(item);
                 Log.d("STARX", "load from database..." + item);
@@ -524,6 +644,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 
     /**
      * Load StopTimes from database
+     *
      * @return
      */
     public ArrayList<tables.StopTime> getStopTimesFromDatabase() {
@@ -533,11 +654,11 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         if (cursor.moveToFirst()) {
             do {
                 tables.StopTime item = new tables.StopTime(
-                        cursor.getInt(0),
-                        cursor.getString(1),
-                        cursor.getString(2),
-                        cursor.getInt(3),
-                        cursor.getString(4)
+                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
+                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
                 );
                 data.add(item);
                 Log.d("STARX", "load from database..." + item);
@@ -549,77 +670,83 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     }
 
     /**
-     * Load Trips from database
+     * Load Trip from database
+     *
      * @return
      */
-    public ArrayList<tables.Trips> getTripsFromDatabase() {
-        Log.d("STARX", "loading trips from database..." );
+    public ArrayList<Trip> getTripsFromDatabase() {
+        Log.d("STARX", "loading trips from database...");
         String selectQuery = "SELECT  * FROM " + StarContract.Trips.CONTENT_PATH;
-        ArrayList<tables.Trips> data = new ArrayList<>();
+        ArrayList<Trip> data = new ArrayList<>();
         Cursor cursor = this.getWritableDatabase().rawQuery(selectQuery, null);
         if (cursor.moveToFirst()) {
             do {
-                tables.Trips item = new tables.Trips(
-                        cursor.getInt(0),
-                        cursor.getInt(1),
-                        cursor.getString(2),
-                        cursor.getInt(3),
-                        cursor.getString(4),
-                        cursor.getString(5)
+                Trip item = new Trip(
+                        cursor.getInt(cursor.getColumnIndex(Trips.TripColumns.TRIP_ID)),
+                        cursor.getInt(cursor.getColumnIndex(Trips.TripColumns.ROUTE_ID)),
+                        cursor.getInt(cursor.getColumnIndex(Trips.TripColumns.SERVICE_ID)),
+                        cursor.getString(cursor.getColumnIndex(Trips.TripColumns.HEADSIGN)),
+                        cursor.getInt(cursor.getColumnIndex(Trips.TripColumns.DIRECTION_ID)),
+                        cursor.getString(cursor.getColumnIndex(Trips.TripColumns.BLOCK_ID)),
+                        cursor.getString(cursor.getColumnIndex(Trips.TripColumns.WHEELCHAIR_ACCESSIBLE))
                 );
                 data.add(item);
                 Log.d("STARX", "load from database..." + item);
             } while (cursor.moveToNext());
-            Log.d("STARX", "-----   " + data.size() + " Trips loaded form database ");
+            Log.d("STARX", "-----   " + data.size() + " Trip loaded form database ");
         }
         cursor.close();
         return data;
     }
 
 
-
-    public static ArrayList<String> getVersions(Context context){
+    public static ArrayList<String> getVersions(Context context) {
         DatabaseHelper databaseHelper = new DatabaseHelper(context);
         String selectQuery = "SELECT  * FROM " + Constants.VERSIONS_TABLE;
         ArrayList<String> versions = new ArrayList<>();
-        Cursor cursor = databaseHelper.getWritableDatabase().rawQuery(selectQuery, null);
-        if (cursor.moveToFirst()) {
-            do {
-                versions.add(cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL)));
-                Log.d("STARX", "version from db...file: " +cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_NAME_COL))+
-                        ", ver: "+cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL))
-                );
-            } while (cursor.moveToNext());
+        try {
+            Cursor cursor = databaseHelper.getWritableDatabase().rawQuery(selectQuery, null);
+            if (cursor.moveToFirst()) {
+                do {
+                    versions.add(cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL)));
+                    Log.d("STARX", "version from db...file: " + cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_NAME_COL)) +
+                            ", ver: " + cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL))
+                    );
+                } while (cursor.moveToNext());
+            }
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            versions.add("");
         }
-        cursor.close();
         return versions;
     }
 
 
-    public void updateVersions(Context context, Bundle bundle){
-        if(bundle != null){
-            if(bundle.containsKey(context.getResources().getString(R.string.data1_url_id))
+    public void updateVersions(Context context, Bundle bundle) {
+        if (bundle != null) {
+            if (bundle.containsKey(context.getResources().getString(R.string.data1_url_id))
                     && bundle.containsKey(context.getResources().getString(R.string.data2_url_id))
                     && bundle.containsKey(context.getResources().getString(R.string.data1_date_id))
                     && bundle.containsKey(context.getResources().getString(R.string.data2_date_id))
-                    )
-            {
+                    ) {
                 String msg1 = bundle.getString(context.getResources().getString(R.string.data1_url_id));
-                String msg2= bundle.getString(context.getResources().getString(R.string.data2_url_id));
-                String date1= bundle.getString(context.getResources().getString(R.string.data1_date_id));
-                String date2= bundle.getString(context.getResources().getString(R.string.data2_date_id));
+                String msg2 = bundle.getString(context.getResources().getString(R.string.data2_url_id));
+                String date1 = bundle.getString(context.getResources().getString(R.string.data1_date_id));
+                String date2 = bundle.getString(context.getResources().getString(R.string.data2_date_id));
                 database = this.getWritableDatabase();
                 database.execSQL("DROP TABLE IF EXISTS " + Constants.VERSIONS_TABLE);
                 ContentValues values = new ContentValues();
                 ContentValues values2 = new ContentValues();
-                values.put(Constants.VERSIONS_FILE_NAME_COL,msg1);
+                values.put(Constants.VERSIONS_FILE_NAME_COL, msg1);
                 values2.put(Constants.VERSIONS_FILE_NAME_COL, msg2);
                 values.put(Constants.VERSIONS_FILE_VERSION_COL, date1);
                 values2.put(Constants.VERSIONS_FILE_VERSION_COL, date2);
                 database.insert(Constants.VERSIONS_TABLE, null, values);
                 database.insert(Constants.VERSIONS_TABLE, null, values2);
-                Log.d("STARX", " new version : "+msg1+", date: "+date1);
-                Log.d("STARX", " new version : "+msg2+", date: "+date2);
+                Log.d("STARX", " new version : " + msg1 + ", date: " + date1);
+                Log.d("STARX", " new version : " + msg2 + ", date: " + date2);
             }
         }
 

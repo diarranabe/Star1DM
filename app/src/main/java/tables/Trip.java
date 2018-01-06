@@ -4,17 +4,19 @@ package tables;
  * Created by diarranabe on 20/11/2017.
  */
 
-public class Trips {
+public class Trip {
 
-    private int RouteId;
+    private int tripId;
+    private int routeId;
     private int serviceId;
     private String headSign;
     private  int directionId;
     private String blockId;
     private String wheelchairAccessible;
 
-    public Trips(int routeId, int serviceId, String headSign, int directionId, String blockId, String wheelchairAccessible) {
-        RouteId = routeId;
+    public Trip(int tripId, int routeId, int serviceId, String headSign, int directionId, String blockId, String wheelchairAccessible) {
+        this.tripId = tripId;
+        this.routeId = routeId;
         this.serviceId = serviceId;
         this.headSign = headSign;
         this.directionId = directionId;
@@ -22,12 +24,29 @@ public class Trips {
         this.wheelchairAccessible = wheelchairAccessible;
     }
 
+/*    public Trip(int routeId, int serviceId, String headSign, int directionId, String blockId, String wheelchairAccessible) {
+        this.routeId = routeId;
+        this.serviceId = serviceId;
+        this.headSign = headSign;
+        this.directionId = directionId;
+        this.blockId = blockId;
+        this.wheelchairAccessible = wheelchairAccessible;
+    }*/
+
+    public int getTripId() {
+        return tripId;
+    }
+
+    public void setTripId(int tripId) {
+        this.tripId = tripId;
+    }
+
     public int getRouteId() {
-        return RouteId;
+        return routeId;
     }
 
     public void setRouteId(int routeId) {
-        RouteId = routeId;
+        this.routeId = routeId;
     }
 
     public int getServiceId() {
@@ -72,13 +91,14 @@ public class Trips {
 
     @Override
     public String toString() {
-        return "Trips{" +
-                "RouteId=" + RouteId +
-                ", serviceId=" + serviceId +
-                ", headSign='" + headSign + '\'' +
-                ", directionId=" + directionId +
-                ", blockId=" + blockId +
-                ", wheelchairAccessible='" + wheelchairAccessible + '\'' +
+        return "Trip{" +
+                "tripId:" + tripId +
+                ", routeId:" + routeId +
+                ", serviceId:" + serviceId +
+                ", headSign:'" + headSign + '\'' +
+                ", directionId:" + directionId +
+                ", blockId:" + blockId +
+                ", wheelchairAccessible:'" + wheelchairAccessible + '\'' +
                 '}';
     }
 
