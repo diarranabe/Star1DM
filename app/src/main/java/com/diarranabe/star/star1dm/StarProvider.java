@@ -38,7 +38,7 @@ public class StarProvider extends ContentProvider implements StarContract {
 
     static {
         starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH, ALL_BUS_ROUTES_ID);
-        starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH + "/#", BUS_ROUTE_BY_ITEM_ID);
+        starUriMatcher.addURI(StarContract.AUTHORITY, "busroutes_stops", BUS_ROUTE_BY_ITEM_ID);
         starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH + "/#/#", BUS_ROUTE_BY_ITEM2);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH, ALL_CALENDARS_ID);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH + "/#", CALENDAR_BY_ITEM_ID);
@@ -66,19 +66,58 @@ public class StarProvider extends ContentProvider implements StarContract {
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection, @Nullable String[] selectionArgs, @Nullable String sortOrder) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+        SQLiteQueryBuilder queryBuilder2 = new SQLiteQueryBuilder();
 
         Cursor cursor;
         switch (starUriMatcher.match(uri)) {
             case ALL_BUS_ROUTES_ID:
                 queryBuilder.setTables(BusRoutes.CONTENT_PATH);
                 cursor = getAllBusRoutes();
-                break;
+                cursor = queryBuilder.query(
+                        database,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                return cursor;
             case BUS_ROUTE_BY_ITEM_ID:
-                queryBuilder.setTables(BusRoutes.CONTENT_PATH);
-                queryBuilder.appendWhere(BusRoutes.BusRouteColumns.ROUTE_ID + "='" + uri.getPathSegments().get(1) + "'");
-                break;
+                queryBuilder2.setTables(Trips.CONTENT_PATH);
+                queryBuilder2.appendWhere(Trips.TripColumns.ROUTE_ID + " == " + selectionArgs[0]);
+                queryBuilder2.appendWhere(" AND "+selectionArgs[1] + " = " + Trips.CONTENT_PATH+"."+Trips.TripColumns.DIRECTION_ID);
+                Cursor c = queryBuilder2.query(
+                        database,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null, "1");
+                String trip = "";
+                if (c.moveToFirst()) {
+                    do {
+                        trip = c.getString(c.getColumnIndex(Trips.TripColumns.TRIP_ID));
+                    } while (c.moveToNext());
+                }
+                queryBuilder.setTables(Stops.CONTENT_PATH + "," + StopTimes.CONTENT_PATH + "," + Trips.CONTENT_PATH);
+                queryBuilder.appendWhere(Stops.CONTENT_PATH+"."+Stops.StopColumns.STOP_ID + "=" + StopTimes.CONTENT_PATH+"."+StopTimes.StopTimeColumns.STOP_ID);
+                queryBuilder.appendWhere(" AND "+StopTimes.CONTENT_PATH+"."+StopTimes.StopTimeColumns.TRIP_ID + "=" + Trips.CONTENT_PATH+"."+Trips.TripColumns.TRIP_ID);
+                queryBuilder.appendWhere(" AND "+selectionArgs[0] + " = " + Trips.CONTENT_PATH+"."+Trips.TripColumns.ROUTE_ID);
+                queryBuilder.appendWhere(" AND "+Trips.CONTENT_PATH+"."+Trips.TripColumns.TRIP_ID+" = "+trip);
+                cursor = queryBuilder.query(
+                        database,
+                        projection,
+                        selection,
+                        null,
+                        Stops.StopColumns.NAME,
+                        null,
+                        StopTimes.StopTimeColumns.ARRIVAL_TIME);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                return cursor;
             case BUS_ROUTE_BY_ITEM2:
-                Log.d("STARX","ID_ITEM2");
+                Log.d("STARX", "ID_ITEM2");
                 queryBuilder.setTables(BusRoutes.CONTENT_PATH +
                         " INNER JOIN " + Trips.CONTENT_PATH + " ON " +
                         BusRoutes.CONTENT_PATH + "." + BusRoutes.BusRouteColumns.ROUTE_ID + " = " + Trips.CONTENT_PATH + "." + Trips.TripColumns.ROUTE_ID);
@@ -115,20 +154,12 @@ public class StarProvider extends ContentProvider implements StarContract {
             default:
         }
 
-        cursor = queryBuilder.query(
-                database,
-                projection,
-                selection,
-                selectionArgs,
-                null,
-                null,
-                sortOrder);
 
         /**
          * register to watch a content URI for changes
          */
-        cursor.setNotificationUri(getContext().getContentResolver(), uri);
-        return cursor;
+
+        return null;
     }
 
     @Nullable
@@ -177,7 +208,7 @@ public class StarProvider extends ContentProvider implements StarContract {
         return 0;
     }
 
-    private Cursor getAllBusRoutes(){
+    private Cursor getAllBusRoutes() {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(BusRoutes.CONTENT_PATH);
         Cursor cursor = queryBuilder.query(

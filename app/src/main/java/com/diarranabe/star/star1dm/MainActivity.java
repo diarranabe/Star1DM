@@ -57,15 +57,15 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);*/
 
-        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
-        databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
+        /*databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
         databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
 
         databaseHelper.insertTrips();
-        testTripsProvider();
-//        testTripsProvider();
-        Log.d("STARX", "end");
+        testTripsProvider();*/
+//        testStopsProvider();
+        fragment1Query();
 
+        Log.d("STARX", "end");
     }
 
 
@@ -332,19 +332,15 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void getBusRoutesFromProvider() {
-        Log.d("STARX", "Test BusRoutesProvider");
-        Uri ur = Uri.parse("content://fr.istic.starproviderDM");
-
-        Uri uri = Uri.withAppendedPath(ur, "busroute/");
-
-//        uri.
-//        Uri uri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.BusRoutes.CONTENT_PATH + "/0006");
-        Cursor cursor = getContentResolver().query(uri,
+    /**
+     * Requete du fragment 1
+     */
+    public void fragment1Query() {
+        Cursor cursor = getContentResolver().query(StarContract.BusRoutes.CONTENT_URI,
                 null, null, null,
                 StarContract.BusRoutes.BusRouteColumns.ROUTE_ID);
 
-        int i =0 ;
+        int i = 0;
         if (cursor.moveToFirst()) {
             do {
                 tables.BusRoute item = new tables.BusRoute(
@@ -357,8 +353,51 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
                 );
                 i++;
-//                Log.d("STARXTEST", "Received from provider ..." + cursor.getString(cursor.getColumnIndex(StarContract.Trip.TripColumns.WHEELCHAIR_ACCESSIBLE)));
-                Log.d("STARXTEST", i+"-Received from provider ..." + item);
+                Log.d("STARXBR", i + "-Received from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
+
+    public void fragment2Query() {
+        Uri stopsUri;
+        stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, "busroutes_stops");
+        String[] selargs = {"0005", "0"};
+        Cursor cursor = managedQuery(stopsUri,
+                null, null, selargs,
+                StarContract.Stops.StopColumns.STOP_ID);
+        if (cursor.moveToFirst()) {
+            do {
+                tables.Stop item = new tables.Stop(
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.STOP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.DESCRIPTION)),
+                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LATITUDE)),
+                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LONGITUDE)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.WHEELCHAIR_BOARDING))
+                );
+                Log.d("STARXTEST", " ------------------- Received from provider ..." + item.getName());
+            } while (cursor.moveToNext());
+        }
+
+    }
+
+    public void testStopsProvider() {
+        // Retrieve student records
+        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "");
+        Cursor cursor = managedQuery(stopsUri,
+                null, null, null,
+                StarContract.Stops.StopColumns.STOP_ID);
+        if (cursor.moveToFirst()) {
+            do {
+                tables.Stop item = new tables.Stop(
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.STOP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.NAME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.DESCRIPTION)),
+                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LATITUDE)),
+                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LONGITUDE)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.WHEELCHAIR_BOARDING))
+                );
+                Log.d("STARXTEST", "Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
@@ -383,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.WHEELCHAIR_ACCESSIBLE))
                 );
                 i++;
-                Log.d("STARXTEST", i+"-Received from provider ..." + item);
+                Log.d("STARXTEST", i + "-Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
@@ -411,27 +450,6 @@ public class MainActivity extends AppCompatActivity {
                         cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.END_DATE))
                 );
                 Log.d("STARXCA", count + "-Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public void testStopsProvider() {
-        // Retrieve student records
-        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "");
-        Cursor cursor = managedQuery(stopsUri,
-                null, null, null,
-                StarContract.Stops.StopColumns.STOP_ID);
-        if (cursor.moveToFirst()) {
-            do {
-                tables.Stop item = new tables.Stop(
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.STOP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.NAME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.DESCRIPTION)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LATITUDE)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LONGITUDE)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.WHEELCHAIR_BOARDING))
-                );
-                Log.d("STARXTEST", "Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
     }
