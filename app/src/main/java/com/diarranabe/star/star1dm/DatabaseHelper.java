@@ -108,11 +108,11 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * Insert toutes les données disponibles dans le dossier
      */
     public void insertAll() {
-//        insertBusRoutes();
-//        insertCalendars();
-//        insertStops();
-//        insertTrips();
-//        insertStopTimes();
+        insertStopTimes();
+        insertCalendars();
+        insertBusRoutes();
+        insertStops();
+        insertTrips();
     }
 
     /**
@@ -426,7 +426,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public static ArrayList<tables.Calendar> loadCalendarData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE);
         ArrayList<tables.Calendar> calendars = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + CALENDAR_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH  + CALENDAR_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
@@ -464,7 +464,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public static ArrayList<tables.BusRoute> loadBusRoutesData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + BUS_ROUTES_CSV_FILE);
         ArrayList<tables.BusRoute> busRoutes = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + BUS_ROUTES_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
 //        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
@@ -500,7 +500,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public static ArrayList<tables.Stop> loadStopsData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOPS_CSV_FILE);
         ArrayList<tables.Stop> stops = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOPS_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH+ STOPS_CSV_FILE));
         Log.e("STARXS", " Absolut Path for file" + file.toString());
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
@@ -533,7 +533,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @throws IOException
      */
     public ArrayList<StopTime> loadStopTimesData() throws IOException {
-        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + "/" + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
+        Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE);
         ArrayList<StopTime> fileStopTimes = new ArrayList<>();
         long items = 0;
         long allStoptimes = 0;
@@ -544,7 +544,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
          */
 //        int nb_files = splitStopTimesFile();
 //        for (int id=1;id<=nb_files; id++){
-        String currfile = INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE;
+        String currfile = INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE;
         Log.d("STARX", "current file ..: " + currfile);
         FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, currfile));
         BufferedReader buffer = new BufferedReader(file);
@@ -657,7 +657,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     public static ArrayList<Trip> loadTripsData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + TRIPS_CSV_FILE);
         ArrayList<Trip> trips = new ArrayList<>();
-        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + TRIPS_CSV_FILE));
+        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH +TRIPS_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;

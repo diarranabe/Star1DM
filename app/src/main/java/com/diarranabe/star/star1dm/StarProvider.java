@@ -12,15 +12,13 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import tables.Trip;
-
 /**
  * Created by diarranabe on 20/11/2017.
  */
 
 public class StarProvider extends ContentProvider implements StarContract {
     SQLiteDatabase database;
-    private static final int ALL_BUS_ROUTES_ID = 1;
+    private static final int ALL_BUS_ROUTES = 1;
     private static final int BUS_ROUTE_STOPS = 11;
     private static final int BUS_ROUTE_BY_ITEM2 = 12;
     private static final int ALL_CALENDARS_ID = 2;
@@ -38,10 +36,26 @@ public class StarProvider extends ContentProvider implements StarContract {
     private static final UriMatcher starUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     static {
-        starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH, ALL_BUS_ROUTES_ID);
-        starUriMatcher.addURI(StarContract.AUTHORITY, "busroutes_stops", BUS_ROUTE_STOPS);
+        /**
+         * Toutes les routes
+         */
+        starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH, ALL_BUS_ROUTES);
+
+        /**
+         * Tous les arrêts d'une route
+         */
+        starUriMatcher.addURI(StarContract.AUTHORITY, Stops.CONTENT_TYPE, BUS_ROUTE_STOPS);
+
+        /**
+         * Tous les arrêts d'un trip
+         */
         starUriMatcher.addURI(StarContract.AUTHORITY,  "stop_trips", STOP_TRIPS);
+
+        /**
+         * Tous les arrêts jusqu'au terminus
+         */
         starUriMatcher.addURI(StarContract.AUTHORITY, StarContract.StopTimes.CONTENT_ITEM_TYPE, TRIP_STOPS_TIMES_TO_TERM);
+
         starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH + "/#/#", BUS_ROUTE_BY_ITEM2);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH, ALL_CALENDARS_ID);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH + "/#", CALENDAR_BY_ITEM_ID);
@@ -71,7 +85,7 @@ public class StarProvider extends ContentProvider implements StarContract {
 
         Cursor cursor;
         switch (starUriMatcher.match(uri)) {
-            case ALL_BUS_ROUTES_ID:
+            case ALL_BUS_ROUTES:
                 queryBuilder.setTables(BusRoutes.CONTENT_PATH);
                 cursor = getAllBusRoutes();
                 cursor = queryBuilder.query(
@@ -89,7 +103,6 @@ public class StarProvider extends ContentProvider implements StarContract {
             case STOP_TRIPS:
                 return getStopTripsTimes(uri,selectionArgs);
             case TRIP_STOPS_TIMES_TO_TERM:
-                Log.e("STARX","STOP_TRIPS ****************************");
                 return getTripStopTimesToTerminus(uri,selectionArgs);
             case ALL_STOP_TIMES_ID:
                 queryBuilder.setTables(StopTimes.CONTENT_PATH);
@@ -116,7 +129,7 @@ public class StarProvider extends ContentProvider implements StarContract {
     private Cursor getRouteStops(Uri uri, String[] selectionArgs) {
         SQLiteQueryBuilder queryBuilder2 = new SQLiteQueryBuilder();
         queryBuilder2.setTables(Trips.CONTENT_PATH);
-        queryBuilder2.appendWhere(Trips.TripColumns.ROUTE_ID + " == " + selectionArgs[0]);
+        queryBuilder2.appendWhere(Trips.TripColumns.ROUTE_ID + " = " + selectionArgs[0]);
         queryBuilder2.appendWhere(" AND " + selectionArgs[1] + " = " + Trips.CONTENT_PATH + "." + Trips.TripColumns.DIRECTION_ID);
         Cursor c = queryBuilder2.query(
                 database,
@@ -200,10 +213,10 @@ public class StarProvider extends ContentProvider implements StarContract {
     @Override
     public String getType(@NonNull Uri uri) {
         switch (starUriMatcher.match(uri)) {
-            case ALL_BUS_ROUTES_ID:
+            case ALL_BUS_ROUTES:
                 return BusRoutes.CONTENT_TYPE;
             case BUS_ROUTE_STOPS:
-                return BusRoutes.CONTENT_ITEM_TYPE;
+                return Stops.CONTENT_TYPE;
             case BUS_ROUTE_BY_ITEM2:
                 return BusRoutes.CONTENT_ITEM_TYPE;
             case ALL_CALENDARS_ID:

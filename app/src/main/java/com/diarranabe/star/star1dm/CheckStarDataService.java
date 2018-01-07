@@ -33,7 +33,7 @@ import cz.msebera.android.httpclient.Header;
 
 public class CheckStarDataService extends Service {
     private static final long DELAY = 5000;
-    private static final long PERIOD = 50000;
+    private static final long PERIOD = 5000;
     //        private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 //    private String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
     private long attempt = 0;
@@ -73,9 +73,6 @@ public class CheckStarDataService extends Service {
 
                             Log.d("STARX", "My Service ok ! " + attempt);
                             attempt++;
-//                            PerformBackgroundTask performBackgroundTask = new PerformBackgroundTask();
-                            // PerformBackgroundTask this class is the class that extends AsynchTask
-//                            performBackgroundTask.execute();
                         } catch (Exception e) {
                             // TODO Auto-generated catch block
                         }
@@ -83,7 +80,7 @@ public class CheckStarDataService extends Service {
                 });
             }
         };
-        timer.schedule(doAsynchronousTask, DELAY, PERIOD); //execute in every 50000 ms
+        timer.schedule(doAsynchronousTask, DELAY, PERIOD);
     }
 
     private void notifyActivity() {
@@ -132,12 +129,12 @@ public class CheckStarDataService extends Service {
         AsyncHttpClient client = new AsyncHttpClient();
         Log.d("STARX", "version start a1 ");
 
-        client.get(Constants.DATA_SOURCE_URL,
+        client.get(""+Constants.DATA_SOURCE_URL,
                 new JsonHttpResponseHandler() {
 
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                        Log.d("STARX", "version start ");
+                        Log.d("STARX", "version start X");
 
                         try {
                             Log.d("STARX", "start new data");
@@ -188,7 +185,6 @@ public class CheckStarDataService extends Service {
                         Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
                     }
                 });
-
     }
 
 
@@ -211,10 +207,6 @@ public class CheckStarDataService extends Service {
         return out.toString();
     }
 
-    /**
-     * @param in : buffer with the php result
-     * @return : the string corresponding to the buffer
-     */
     public static String InputStreamToString(InputStream in) {
         // On appelle la methode precedente avec une taille de buffer par defaut
         return InputStreamToString(in, 1024);

@@ -27,6 +27,7 @@ import tables.Trip;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import static android.os.Environment.getExternalStorageDirectory;
 
@@ -50,18 +51,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
         Log.d("STARX", "start");
- /*
-        if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
+      /*  if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
 //            loadFirstFileData();
-        }
+        }*/
        onNewIntent(getIntent());
         Intent intent = new Intent(this, CheckStarDataService.class);
-        startService(intent);*/
+        startService(intent);
 
 
-       /* databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
-        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
-        databaseHelper.insertStopTimes();*/
+//        databaseHelper.insertStopTimes();
+//getJson2(testUrl);
 
 
 //fragment3Query();
@@ -77,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                         "--------------------------Received from provider ..." );
         }*/
 
-        fragment4Query();
+//        fragment2Query();
 
         Log.d("STARX", "end");
     }
@@ -106,6 +105,17 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("STARX", " notif msg : " + file2 + ", date: " + date2);
 
                 // Telecharger et Ajouter les nouvelles données
+                databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.BusRoutes.CONTENT_PATH);
+                databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Calendar.CONTENT_PATH);
+                databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Stops.CONTENT_PATH);
+                databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
+                databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
+                databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_BUS_ROUTE_TABLE);
+                databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_CALENDAR_TABLE);
+                databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOPS_TABLE);
+                databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
+                databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
+
                 downZip(file1);
 //                downZip(file2);
 
@@ -130,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                Log.e("XXXX", "" + response.toString());
 
                 try {
                     JSONArray reords = response.getJSONArray("records");
@@ -220,6 +231,8 @@ public class MainActivity extends AppCompatActivity {
                      */
                     DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
                     databaseHelper.insertAll();
+                    dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
+                    mProgressDialog.dismiss();
 
 
                 } catch (IOException e) {
@@ -234,6 +247,7 @@ public class MainActivity extends AppCompatActivity {
                 int val = (int) ((bytesWritten * 100) / totalSize);
                 Log.d("STARX", "downloading ..... " + val);
                 mProgressDialog.setProgress(val);
+                mProgressDialog.getCurrentFocus();
             }
 
             @Override
@@ -246,7 +260,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 super.onFinish();
-                dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
+//                dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
             }
         });
     }
@@ -352,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
      * Requete du fragment 1
      */
     public void fragment1Query() {
-        Cursor cursor = getContentResolver().query(StarContract.BusRoutes.CONTENT_URI,
+        Cursor cursor = this.getContentResolver().query(StarContract.BusRoutes.CONTENT_URI,
                 null, null, null,
                 StarContract.BusRoutes.BusRouteColumns.ROUTE_ID);
 
@@ -375,12 +389,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void fragment2Query() {
-        Uri stopsUri;
-        stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, "busroutes_stops");
         String[] selargs = {"0005", "0"};
-        Cursor cursor = managedQuery(stopsUri,
+        Cursor cursor = this.getContentResolver().query(StarContract.Stops.CONTENT_URI,
                 null, null, selargs,
-                StarContract.Stops.StopColumns.STOP_ID);
+                null);
         if (cursor.moveToFirst()) {
             do {
                 tables.Stop item = new tables.Stop(
@@ -543,5 +555,44 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("STARXTEST", count + "Received from provider ..." + item);
             } while (cursor.moveToNext());
         }
+    }
+
+
+    public void getJson2(String url) {
+        AsyncHttpClient client = new AsyncHttpClient();
+        final ArrayList<String> listResult = new ArrayList<String>();
+        client.get("" + url, new JsonHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+
+                try {
+
+                    Log.e("XXXX", " + baka " + response.toString());
+                    JSONArray reords = response.getJSONArray("records");
+
+                    JSONObject object1 = (JSONObject) reords.get(0);
+
+                    JSONObject object2 = (JSONObject) object1.get("fields");
+
+                    listResult.add(object2.get("url").toString());
+                    listResult.add(object2.get("id").toString());
+
+                    //   downZip(object2.get("url").toString());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                //Json object is returned as a response
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                super.onFailure(statusCode, headers, responseString, throwable);
+                Log.e("XXXX", "==> PROBLEME DE CHARGEMENRT <==");
+            }
+        });
+
     }
 }
