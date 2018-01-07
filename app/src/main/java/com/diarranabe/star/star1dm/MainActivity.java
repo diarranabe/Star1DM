@@ -3,6 +3,7 @@ package com.diarranabe.star.star1dm;
 import android.Manifest;
 import android.app.Activity;
 import android.app.ProgressDialog;
+import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -57,16 +58,31 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);*/
 
-        /*databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.Trips.CONTENT_PATH);
-        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
 
-        databaseHelper.insertTrips();
-        testTripsProvider();*/
+       /* databaseHelper.getWritableDatabase().execSQL("DROP TABLE IF EXISTS " + StarContract.StopTimes.CONTENT_PATH);
+        databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
+        databaseHelper.insertStopTimes();*/
+
+
+//fragment3Query();
+
 //        testStopsProvider();
-        fragment1Query();
+
+        /*Cursor cursor = databaseHelper.getWritableDatabase().query("stoptime",null,null,null,null,null,null,null);
+        while (cursor!= null && (cursor.moveToFirst())){
+            cursor.moveToFirst();
+*//*
+                Log.d("STARXTEST", cursor.getInt(0)+","+cursor.getInt(1)+","+cursor.getInt(2)+
+                        ","+cursor.getString(3)+
+                        "--------------------------Received from provider ..." );
+        }*/
+
+        fragment4Query();
 
         Log.d("STARX", "end");
     }
+
+
 
 
     /**
@@ -381,9 +397,62 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Les horaires de passage à un arrêt
+     * en input : id_arret, id_route, date(20180105), heure(21:59:00)
+     * Accès à toutes les colonnes de stop,stoptime,trip,calendar pour chaque ligne
+     */
+    private void fragment3Query() {
+        Uri stopsUri;
+        stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, "stop_trips");
+        String[] selargs = {"1258", "0005", "20180105","21:59:00"};
+        Cursor cursor = getContentResolver().query(stopsUri,
+                null, null, selargs,
+                StarContract.Trips.TripColumns.TRIP_ID);
+        if (cursor!= null && (cursor.moveToFirst())){
+            do {
+                tables.StopTime item = new tables.StopTime(
+                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
+                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
+                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
+                );
+                Log.d("STARXTEST", "from provider ..." + item);
+            } while (cursor.moveToNext());
+        }
+    }
+
+
+    /**
+     * Les horaires de passage d'un trip sur tous les arrêt à partir d'une heure donnée jusqu'au terminus
+     * en input : id_trip, heure(21:59:00)
+     * Accès à toutes les colonnes de stoptime, stop, trip sont disponibles pour chaque ligne
+     */
+    private void fragment4Query() {
+        Uri stopsUri;
+        stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.StopTimes.CONTENT_ITEM_TYPE);
+        String[] selargs = {"19061", "22:30:00"};
+        CursorLoader cl = new CursorLoader(this,stopsUri,
+                null, null, selargs,
+                null);
+        Cursor cursor = cl.loadInBackground();
+        Log.d("STARXTEST", "from provider ... start" );
+        while (cursor.moveToNext()) {
+            tables.StopTime item = new tables.StopTime(
+                    cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
+                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
+                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
+                    cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
+                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
+            );
+                Log.d("STARXTEST", "from provider ..." +item);
+        }
+        Log.d("STARXTEST", "from provider ...end");
+    }
+
     public void testStopsProvider() {
-        // Retrieve student records
-        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "");
+        Uri stopsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "/");
         Cursor cursor = managedQuery(stopsUri,
                 null, null, null,
                 StarContract.Stops.StopColumns.STOP_ID);
@@ -456,13 +525,12 @@ public class MainActivity extends AppCompatActivity {
 
     public void testStopTimesProvider() {
         Log.d("STARX", "Test StopTimesProvider");
-//        Uri tripsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.StopTimes.CONTENT_PATH + "/23719");
         Uri tripsUri = Uri.withAppendedPath(StarContract.AUTHORITY_URI, StarContract.StopTimes.CONTENT_PATH + "");
-        Cursor cursor = managedQuery(tripsUri,
+        Cursor cursor = getContentResolver().query(tripsUri,
                 null, null, null,
                 StarContract.StopTimes.StopTimeColumns.TRIP_ID);
         long count = 0;
-        if (cursor.moveToFirst()) {
+        if (cursor!= null && (cursor.moveToFirst())){
             do {
                 count++;
                 tables.StopTime item = new tables.StopTime(

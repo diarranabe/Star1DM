@@ -18,7 +18,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -28,7 +27,6 @@ import tables.Stop;
 import tables.StopTime;
 import tables.Trip;
 
-import static android.content.ContentValues.TAG;
 import static android.os.Environment.getExternalStorageDirectory;
 
 
@@ -311,11 +309,14 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         database.insert(StopTimes.CONTENT_PATH, null, values);
     }
 
-    public void insertStopTimes(ArrayList<StopTime> stopTimes) {
+    public void insertStopTimes() {
         database = this.getWritableDatabase();
-        /*for (StopTime stopTime : stopTimes){
-            insertStopTime(stopTime);
-        }*/
+        ArrayList<tables.StopTime> stopTimes = new ArrayList<StopTime>();
+        try {
+            stopTimes = loadStopTimesData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         try {
             database.beginTransaction();
             String sql = "INSERT INTO " + StopTimes.CONTENT_PATH + " (" +
@@ -531,7 +532,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * @return
      * @throws IOException
      */
-    public void loadStopTimesData() throws IOException {
+    public ArrayList<StopTime> loadStopTimesData() throws IOException {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + "/" + DOWNLOAD_PATH + "/" + STOP_TIMES_CSV_FILE);
         ArrayList<StopTime> fileStopTimes = new ArrayList<>();
         long items = 0;
@@ -565,7 +566,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             items++;
             nb++;
         }
-        insertStopTimes(fileStopTimes);
         Log.d("STARX", fileStopTimes.size() + "- StopTimes inserted ....");
 
         buffer.close();
@@ -577,6 +577,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
          * A décommenter si on l'a fait au dessus
          */
 //        }
+        return fileStopTimes;
     }
 
     public static int splitStopTimesFile() {

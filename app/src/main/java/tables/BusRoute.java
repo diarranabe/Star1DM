@@ -13,7 +13,7 @@ public class BusRoute {
     private String description;
     private String type;
     private String color;
-    private  String textColor;
+    private String textColor;
 
     public BusRoute(String route_id, String shortName, String longName, String description, String type, String color, String textColor) {
         this.route_id = route_id;
