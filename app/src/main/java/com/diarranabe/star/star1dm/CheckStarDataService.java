@@ -19,8 +19,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -32,10 +30,8 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class CheckStarDataService extends Service {
-    private static final long DELAY = 5000;
-    private static final long PERIOD = 5000;
-    //        private String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
-//    private String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
+    private static final long DELAY = 30*1000*60;// Delai avant de lancer le service
+    private static final long PERIOD = 24*60*60*1000; // Intervalle de temps de vérification de nouvelle version
     private long attempt = 0;
     private String DATA_URL1 = "";
     private String DATA_URL2 = "";
@@ -47,13 +43,11 @@ public class CheckStarDataService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
 
         checkStarVersions();
-
         return Service.START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        //TODO for communication return IBinder implementation
         return null;
     }
 
@@ -74,7 +68,7 @@ public class CheckStarDataService extends Service {
                             Log.d("STARX", "My Service ok ! " + attempt);
                             attempt++;
                         } catch (Exception e) {
-                            // TODO Auto-generated catch block
+
                         }
                     }
                 });

@@ -44,12 +44,12 @@ public class StarProvider extends ContentProvider implements StarContract {
         /**
          * Tous les arrêts d'une route
          */
-        starUriMatcher.addURI(StarContract.AUTHORITY, Stops.CONTENT_TYPE, BUS_ROUTE_STOPS);
+        starUriMatcher.addURI(StarContract.AUTHORITY, "route_stops", BUS_ROUTE_STOPS);
 
         /**
          * Tous les arrêts d'un trip
          */
-        starUriMatcher.addURI(StarContract.AUTHORITY,  "stop_trips", STOP_TRIPS);
+        starUriMatcher.addURI(StarContract.AUTHORITY, "stop_trips", STOP_TRIPS);
 
         /**
          * Tous les arrêts jusqu'au terminus
@@ -84,8 +84,8 @@ public class StarProvider extends ContentProvider implements StarContract {
         SQLiteQueryBuilder queryBuilder2 = new SQLiteQueryBuilder();
 
         Cursor cursor;
-        switch (starUriMatcher.match(uri)) {
-            case ALL_BUS_ROUTES:
+        switch (uri.toString()) {
+            case "content://"+StarContract.AUTHORITY+"/"+BusRoutes.CONTENT_PATH:
                 queryBuilder.setTables(BusRoutes.CONTENT_PATH);
                 cursor = getAllBusRoutes();
                 cursor = queryBuilder.query(
@@ -98,20 +98,58 @@ public class StarProvider extends ContentProvider implements StarContract {
                         sortOrder);
                 cursor.setNotificationUri(getContext().getContentResolver(), uri);
                 return cursor;
-            case BUS_ROUTE_STOPS:
-               return getRouteStops(uri, selectionArgs);
-            case STOP_TRIPS:
-                return getStopTripsTimes(uri,selectionArgs);
-            case TRIP_STOPS_TIMES_TO_TERM:
-                return getTripStopTimesToTerminus(uri,selectionArgs);
-            case ALL_STOP_TIMES_ID:
+            case "content://fr.istic.starproviderDM/route_stops":
+                Log.d("STARX","11 curseur ");
+
+//               return getRouteStops(uri, selectionArgs);
+                queryBuilder2 = new SQLiteQueryBuilder();
+                queryBuilder2.setTables(Trips.CONTENT_PATH);
+                queryBuilder2.appendWhere(Trips.TripColumns.ROUTE_ID + " = " + selectionArgs[0]);
+                queryBuilder2.appendWhere(" AND " + selectionArgs[1] + " = " + Trips.CONTENT_PATH + "." + Trips.TripColumns.DIRECTION_ID);
+                Cursor c = queryBuilder2.query(
+                        database,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null, "1");
+                String trip = "";
+                if (c.moveToFirst()) {
+                    do {
+                        trip = c.getString(c.getColumnIndex(Trips.TripColumns.TRIP_ID));
+                    } while (c.moveToNext());
+                }
+                queryBuilder = new SQLiteQueryBuilder();
+                queryBuilder.setTables(Stops.CONTENT_PATH + "," + StopTimes.CONTENT_PATH + "," + Trips.CONTENT_PATH);
+                queryBuilder.appendWhere(Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID + "=" + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.STOP_ID);
+                queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.TRIP_ID + "=" + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID);
+                queryBuilder.appendWhere(" AND " + selectionArgs[0] + " = " + Trips.CONTENT_PATH + "." + Trips.TripColumns.ROUTE_ID);
+                queryBuilder.appendWhere(" AND " + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID + " = " + trip);
+                cursor = queryBuilder.query(
+                        database,
+                        null,
+                        null,
+                        null,
+                        Stops.StopColumns.NAME,
+                        null,
+                        StopTimes.StopTimeColumns.ARRIVAL_TIME);
+                cursor.setNotificationUri(getContext().getContentResolver(), uri);
+                Log.d("STARX","vv curseur "+cursor.getCount());
+                return cursor;
+            case "content://"+StarContract.AUTHORITY+"/"+StopTimes.CONTENT_PATH:
+                return getStopTripsTimes(uri, selectionArgs);
+            case "content://"+StarContract.AUTHORITY+"/arrettoterminus":
+                return getTripStopTimesToTerminus(uri, selectionArgs);
+
+            case ""+ALL_STOP_TIMES_ID:
                 queryBuilder.setTables(StopTimes.CONTENT_PATH);
                 break;
-            case STOP_TIME_BY_ITEM_ID:
+            case ""+STOP_TIME_BY_ITEM_ID:
                 queryBuilder.setTables(StopTimes.CONTENT_PATH);
                 queryBuilder.appendWhere(StopTimes.StopTimeColumns.TRIP_ID + "=" + uri.getPathSegments().get(1));
                 break;
-            case TRIP_BY_ITEM_ID:
+            case ""+TRIP_BY_ITEM_ID:
                 queryBuilder.setTables(Trips.CONTENT_PATH);
                 queryBuilder.appendWhere(Trips.TripColumns.ROUTE_ID + "=" + uri.getPathSegments().get(1));
                 break;
@@ -166,16 +204,16 @@ public class StarProvider extends ContentProvider implements StarContract {
     private Cursor getStopTripsTimes(Uri uri, String[] selectionArgs) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         long date = Long.valueOf(selectionArgs[2]);
-        queryBuilder.setTables(Stops.CONTENT_PATH + "," + StopTimes.CONTENT_PATH + "," + Trips.CONTENT_PATH+ "," + Calendar.CONTENT_PATH);
-        Log.e("STARX","Les passages à un arrêt");
+        queryBuilder.setTables(Stops.CONTENT_PATH + "," + StopTimes.CONTENT_PATH + "," + Trips.CONTENT_PATH + "," + Calendar.CONTENT_PATH);
+        Log.e("STARX", "Les passages à un arrêt");
         queryBuilder.appendWhere(Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID + "=" + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.STOP_ID);
         queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.TRIP_ID + "=" + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID);
-        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.SERVICE_ID+ " = " +  Trips.CONTENT_PATH+"."+Trips.TripColumns.SERVICE_ID);
-        queryBuilder.appendWhere(" AND " + Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID+ " = '" + selectionArgs[0]+"'" );
-        queryBuilder.appendWhere(" AND " + Trips.CONTENT_PATH + "." + Trips.TripColumns.ROUTE_ID+ " = '" + selectionArgs[1] +"'");
-        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.END_DATE+ " <= '" + (date)+"'" );
-        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.END_DATE+ " > " + "'"+(date-1)+"'" );
-        queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME+ " >= '" + selectionArgs[3]+"'" );
+        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.SERVICE_ID + " = " + Trips.CONTENT_PATH + "." + Trips.TripColumns.SERVICE_ID);
+        queryBuilder.appendWhere(" AND " + Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID + " = '" + selectionArgs[0] + "'");
+        queryBuilder.appendWhere(" AND " + Trips.CONTENT_PATH + "." + Trips.TripColumns.ROUTE_ID + " = '" + selectionArgs[1] + "'");
+        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.END_DATE + " <= '" + (date) + "'");
+        queryBuilder.appendWhere(" AND " + Calendar.CONTENT_PATH + "." + Calendar.CalendarColumns.END_DATE + " > " + "'" + (date - 1) + "'");
+        queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME + " >= '" + selectionArgs[3] + "'");
         Cursor cursor = queryBuilder.query(
                 database,
                 null,
@@ -183,7 +221,7 @@ public class StarProvider extends ContentProvider implements StarContract {
                 null,
                 null,
                 null,
-                StopTimes.CONTENT_PATH+"."+StopTimes.StopTimeColumns.ARRIVAL_TIME);
+                StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME);
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
@@ -191,12 +229,12 @@ public class StarProvider extends ContentProvider implements StarContract {
     private Cursor getTripStopTimesToTerminus(Uri uri, String[] selectionArgs) {
         SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
         queryBuilder.setTables(Stops.CONTENT_PATH + "," + StopTimes.CONTENT_PATH + "," + Trips.CONTENT_PATH);
-        Log.e("STARX","Les passages d'un trip aux arrêts jusqu'au terminus à partir d'une heure");
+        Log.e("STARX", "Les passages d'un trip aux arrêts jusqu'au terminus à partir d'une heure");
         queryBuilder.appendWhere(Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID + "=" + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.STOP_ID);
         queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.TRIP_ID + "=" + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID);
-        queryBuilder.appendWhere(" AND " + Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID+ " = " + StopTimes.CONTENT_PATH+"."+StopTimes.StopTimeColumns.STOP_ID );
-        queryBuilder.appendWhere(" AND " + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID+ " = '" + selectionArgs[0] +"'");
-        queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME+ " >= '" + selectionArgs[1]+"'" );
+        queryBuilder.appendWhere(" AND " + Stops.CONTENT_PATH + "." + Stops.StopColumns.STOP_ID + " = " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.STOP_ID);
+        queryBuilder.appendWhere(" AND " + Trips.CONTENT_PATH + "." + Trips.TripColumns.TRIP_ID + " = '" + selectionArgs[0] + "'");
+        queryBuilder.appendWhere(" AND " + StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME + " >= '" + selectionArgs[1] + "'");
         Cursor cursor = queryBuilder.query(
                 database,
                 null,
@@ -204,7 +242,7 @@ public class StarProvider extends ContentProvider implements StarContract {
                 null,
                 null,
                 null,
-                StopTimes.CONTENT_PATH+"."+StopTimes.StopTimeColumns.ARRIVAL_TIME);
+                StopTimes.CONTENT_PATH + "." + StopTimes.StopTimeColumns.ARRIVAL_TIME);
         cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
@@ -217,24 +255,6 @@ public class StarProvider extends ContentProvider implements StarContract {
                 return BusRoutes.CONTENT_TYPE;
             case BUS_ROUTE_STOPS:
                 return Stops.CONTENT_TYPE;
-            case BUS_ROUTE_BY_ITEM2:
-                return BusRoutes.CONTENT_ITEM_TYPE;
-            case ALL_CALENDARS_ID:
-                return Calendar.CONTENT_TYPE;
-            case CALENDAR_BY_ITEM_ID:
-                return Calendar.CONTENT_ITEM_TYPE;
-            case ALL_STOPS_ID:
-                return Stops.CONTENT_TYPE;
-            case STOP_TRIPS:
-                return Stops.CONTENT_ITEM_TYPE;
-            case ALL_STOP_TIMES_ID:
-                return StopTimes.CONTENT_TYPE;
-            case STOP_TIME_BY_ITEM_ID:
-                return StopTimes.CONTENT_ITEM_TYPE;
-            case TRIP_STOPS_TIMES_TO_TERM:
-                return StopTimes.CONTENT_ITEM_TYPE;
-            case TRIP_BY_ITEM_ID:
-                return Trips.CONTENT_ITEM_TYPE;
         }
         return null;
     }
