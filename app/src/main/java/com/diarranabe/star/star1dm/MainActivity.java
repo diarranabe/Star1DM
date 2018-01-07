@@ -5,7 +5,9 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.CursorLoader;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.pm.SharedLibraryInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -28,6 +30,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
 
 import static android.os.Environment.getExternalStorageDirectory;
 
@@ -38,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private ProgressDialog mProgressDialog;
     public static final int DIALOG_DOWNLOAD_PROGRESS = 0;
     DatabaseHelper databaseHelper;
+
+    private static String PREF = "frist" ;
+    SharedPreferences sharedPreferences;
 
     //Absolu path whre file are unZip
     private String exportPath = "";
@@ -50,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
         databaseHelper = new DatabaseHelper(getApplicationContext());
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
+        sharedPreferences = getSharedPreferences(PREF, MODE_PRIVATE);
+
         Log.d("STARX", "start");
       /*  if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
 //            loadFirstFileData();
@@ -116,7 +124,9 @@ public class MainActivity extends AppCompatActivity {
                 databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
                 databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
 
-                downZip(file1);
+                downZip(file1,file2);
+
+
 //                downZip(file2);
 
                 DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
@@ -149,7 +159,7 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONObject object2 = (JSONObject) object1.get("fields");
 
-                    downZip(object2.get("url").toString());
+                  //  downZip(object2.get("url").toString());
 
                     Log.e("XXXX", "" + object2.get("url").toString());
                 } catch (JSONException e) {
@@ -173,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param zipFileUrl
      */
-    public void downZip(String zipFileUrl) {
+    public void downZip(String zipFileUrl, final String file2) {
         final String sourceFilname = "" + zipFileUrl;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
@@ -234,6 +244,23 @@ public class MainActivity extends AppCompatActivity {
                     dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
                     mProgressDialog.dismiss();
 
+                    if (sharedPreferences.contains(PREF)){
+                        if (sharedPreferences.getBoolean("pass",true)){
+                            if (sharedPreferences.getBoolean("count",true)){
+                                Log.d("STARX"," entre 2");
+                                downZip(file2,file2);
+                                sharedPreferences.edit().putBoolean("count", false);
+
+                            }else {
+                                sharedPreferences.edit().putBoolean("count", true);
+                                Log.d("STARX"," entre sortrir");
+                            }
+                        }
+                    }else {
+                        Log.d("STARX"," entre 1");
+                        sharedPreferences.edit().putBoolean("pass", true);
+                        sharedPreferences.edit().putBoolean("count", true);
+                    }
 
                 } catch (IOException e) {
                     Log.e("STARX", "success catch");
@@ -293,7 +320,7 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Telecharger et ajouter les dnées dans la bd
                      */
-                    downZip(file_url);
+                //    downZip(file_url);
 
                     Log.d("STARX", "first file inserted in the database");
                 } catch (JSONException e) {

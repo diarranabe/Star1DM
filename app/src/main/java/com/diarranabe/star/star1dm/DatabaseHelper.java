@@ -108,11 +108,11 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * Insert toutes les données disponibles dans le dossier
      */
     public void insertAll() {
-        insertStopTimes();
+        /*insertStopTimes();
         insertCalendars();
         insertBusRoutes();
         insertStops();
-        insertTrips();
+        insertTrips();*/
     }
 
     /**
