@@ -38,7 +38,6 @@ public class Constants implements StarContract {
             StarContract.StopTimes.StopTimeColumns.STOP_ID + " INTEGER," +
             StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE + " TEXT );";
 
-
     public static final String CREATE_CALENDAR_TABLE = "CREATE TABLE IF NOT EXISTS " + Calendar.CONTENT_PATH +
             "(" + Calendar.CalendarColumns.SERVICE_ID + " INTEGER," +
             Calendar.CalendarColumns.MONDAY + " TEXT," +
@@ -68,7 +67,5 @@ public class Constants implements StarContract {
      */
     public static final String DEFAULT_FIRST_VERSION = "0001";
 
-
     public static String DATA_SOURCE_URL = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
-//    public static String DATA_SOURCE_URL = "http://www.dbs.bzh/portfolio/docs/tco-busmetro-horaires-gtfs-versions-td.json";
 }

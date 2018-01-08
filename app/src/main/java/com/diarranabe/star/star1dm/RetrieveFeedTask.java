@@ -19,13 +19,9 @@ class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
     String API_URL;
 
     protected void onPreExecute() {
-//        progressBar.setVisibility(View.VISIBLE);
-//        responseView.setText("");
     }
 
     protected String doInBackground(Void... urls) {
-//        String email = emailText.getText().toString();
-        // Do some validation here
 
         try {
             URL url = new URL(API_URL);
@@ -54,8 +50,6 @@ class RetrieveFeedTask extends AsyncTask<Void, Void, String> {
         if(response == null) {
             response = "THERE WAS AN ERROR";
         }
-//        progressBar.setVisibility(View.GONE);
         Log.i("INFO", response);
-//        responseView.setText(response);
     }
 }

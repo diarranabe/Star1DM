@@ -55,7 +55,6 @@ public class StarProvider extends ContentProvider implements StarContract {
          * Tous les arrêts jusqu'au terminus
          */
         starUriMatcher.addURI(StarContract.AUTHORITY, StarContract.StopTimes.CONTENT_ITEM_TYPE, TRIP_STOPS_TIMES_TO_TERM);
-
         starUriMatcher.addURI(StarContract.AUTHORITY, BusRoutes.CONTENT_PATH + "/#/#", BUS_ROUTE_BY_ITEM2);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH, ALL_CALENDARS_ID);
         starUriMatcher.addURI(StarContract.AUTHORITY, Calendar.CONTENT_PATH + "/#", CALENDAR_BY_ITEM_ID);
@@ -162,7 +161,6 @@ public class StarProvider extends ContentProvider implements StarContract {
 
         return null;
     }
-
 
     private Cursor getRouteStops(Uri uri, String[] selectionArgs) {
         SQLiteQueryBuilder queryBuilder2 = new SQLiteQueryBuilder();

@@ -2,19 +2,21 @@ package com.diarranabe.star.star1dm;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
-import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.SharedLibraryInfo;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.BinaryHttpResponseHandler;
@@ -25,16 +27,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
-import tables.Trip;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.prefs.Preferences;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static android.os.Environment.getExternalStorageDirectory;
-import static com.diarranabe.star.star1dm.StarContract.AUTHORITY_URI;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -47,10 +48,17 @@ public class MainActivity extends AppCompatActivity {
     private static String PREF = "frist";
     SharedPreferences sharedPreferences;
 
+    private static final long DELAY = 30*1000*60;// Delai avant de lancer le service
+    private static final long PERIOD = 24*60*60*1000; // Intervalle de temps de vérification de nouvelle version
+    private long attempt = 0;
+    private String DATA_URL1 = "";
+    private String DATA_URL2 = "";
+    private String DATA_URL1_LAST_UPDATE = "";
+    private String DATA_URL2_LAST_UPDATE = "";
+
     //Absolu path whre file are unZip
     private String exportPath = "";
 
-    private String testUrl = "https://data.explore.star.fr/api/records/1.0/search/?dataset=tco-busmetro-horaires-gtfs-versions-td&sort=-debutvalidite";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,39 +67,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
         sharedPreferences = getSharedPreferences(PREF, MODE_PRIVATE);
-
-        Log.d("STARX", "start");
-      /*  if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
-//            loadFirstFileData();
-        }*/
         onNewIntent(getIntent());
         Intent intent = new Intent(this, CheckStarDataService.class);
         startService(intent);
-
-
-//        databaseHelper.insertStopTimes();
-//getJson2(testUrl);
-
-
-//fragment3Query();
-
-//        testStopsProvider();
-
-        /*Cursor cursor = databaseHelper.getWritableDatabase().query("stoptime",null,null,null,null,null,null,null);
-        while (cursor!= null && (cursor.moveToFirst())){
-            cursor.moveToFirst();
-*//*
-                Log.d("STARXTEST", cursor.getInt(0)+","+cursor.getInt(1)+","+cursor.getInt(2)+
-                        ","+cursor.getString(3)+
-                        "--------------------------Received from provider ..." );
-        }*/
-
-        fragment3Query();
+        Log.d("STARX", "start");
 
 
         Log.d("STARX", "end");
     }
-
 
     /**
      * Losrqu'on clic sur la notif de mise à jour
@@ -124,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
                 databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOPS_TABLE);
                 databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_STOP_TIMES_TABLE);
                 databaseHelper.getWritableDatabase().execSQL(Constants.CREATE_TRIPS_TABLE);
-                downZip(file1, file2);
+                downloadDezip(file1, file2);
 
                 DatabaseHelper dh = new DatabaseHelper(getApplicationContext());
                 /**
@@ -141,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
      * @param url
      * @return
      */
-    public void getJson(String url) {
+    public void getJsonInfos(String url) {
         AsyncHttpClient client = new AsyncHttpClient();
         client.get("" + url, new JsonHttpResponseHandler() {
 
@@ -156,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
 
                     JSONObject object2 = (JSONObject) object1.get("fields");
 
-                    //  downZip(object2.get("url").toString());
+                    //  downloadDezip(object2.get("url").toString());
 
                     Log.e("XXXX", "" + object2.get("url").toString());
                 } catch (JSONException e) {
@@ -180,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
      *
      * @param zipFileUrl
      */
-    public void downZip(String zipFileUrl, final String file2) {
+    public void downloadDezip(String zipFileUrl, final String file2) {
         final String sourceFilname = "" + zipFileUrl;
         AsyncHttpClient client = new AsyncHttpClient();
         String[] allowedType = {
@@ -212,7 +195,97 @@ public class MainActivity extends AppCompatActivity {
 
                     File _f = new File(file, DestinationName);
 
-//                    DatabaseHelper.INIT_FOLDER_PATH = DestinationName + "/";
+                    FileOutputStream output = new FileOutputStream(_f);
+
+                    Log.e("STARX", "success try");
+                    output.write(binaryData);
+                    output.close();
+                    Log.e("STARX", "" + _f);
+
+                    // Debut du deziping
+                    exportPath = _f.getAbsolutePath();
+                    exportPath = exportPath.replace(".zip", "");
+                    Log.e("STARX", "==> " + exportPath);
+
+                    DatabaseHelper.DOWNLOAD_PATH = exportPath;
+                    exportPath = exportPath + "/";
+
+                    // decropress file in folder whith id name
+                    DecompressFast df = new DecompressFast(_f.getAbsolutePath(), exportPath);
+                    df.unzip();
+
+                    /**
+                     * Inserer les données télechargées
+                     */
+                    DatabaseHelper databaseHelper = new DatabaseHelper(getApplicationContext());
+                    databaseHelper.insertAll();
+                    dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
+                    mProgressDialog.dismiss();
+
+                    /**
+                     * Lance le deuxième fichier
+                     */
+                    downloadDezip(file2);
+                } catch (IOException e) {
+                    Log.e("STARX", "success catch");
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onProgress(long bytesWritten, long totalSize) {
+                super.onProgress(bytesWritten, totalSize);
+                int val = (int) ((bytesWritten * 100) / totalSize);
+                Log.d("STARX", "downloading ..... " + val);
+                mProgressDialog.setProgress(val);
+                mProgressDialog.getCurrentFocus();
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] binaryData, Throwable error) {
+
+                Log.e("STARX", "==> " + error);
+
+            }
+
+            @Override
+            public void onFinish() {
+                super.onFinish();
+            }
+        });
+    }
+
+
+    public void downloadDezip(String zipFileUrl) {
+        final String sourceFilname = "" + zipFileUrl;
+        AsyncHttpClient client = new AsyncHttpClient();
+        String[] allowedType = {
+                "application/zip"
+        };
+        client.get(sourceFilname, new BinaryHttpResponseHandler(allowedType) {
+
+            @Override
+            public void onStart() {
+                super.onStart();
+                showDialog(DIALOG_DOWNLOAD_PROGRESS);
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] binaryData) {
+
+                Log.e("STARX", "success start");
+
+                try {
+                    //Splitting a File Name from SourceFileName
+                    String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
+                    DatabaseHelper.INIT_FOLDER_PATH = "star1dm/" + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
+                    //Saving a File into Download Folder
+                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
+                    String INIT_FOLDER_PATH = "star1dm/";
+
+                    File file = new File((DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH));
+
+                    File _f = new File(file, DestinationName);
 
                     FileOutputStream output = new FileOutputStream(_f);
 
@@ -241,24 +314,6 @@ public class MainActivity extends AppCompatActivity {
                     dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
                     mProgressDialog.dismiss();
 
-                    if (sharedPreferences.contains(PREF)) {
-                        if (sharedPreferences.getBoolean("pass", true)) {
-                            if (sharedPreferences.getBoolean("count", true)) {
-                                Log.d("STARX", " entre 2");
-                                downZip(file2, file2);
-                                sharedPreferences.edit().putBoolean("count", false);
-
-                            } else {
-                                sharedPreferences.edit().putBoolean("count", true);
-                                Log.d("STARX", " entre sortrir");
-                            }
-                        }
-                    } else {
-                        Log.d("STARX", " entre 1");
-                        sharedPreferences.edit().putBoolean("pass", true);
-                        sharedPreferences.edit().putBoolean("count", true);
-                    }
-
                 } catch (IOException e) {
                     Log.e("STARX", "success catch");
                     e.printStackTrace();
@@ -284,24 +339,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFinish() {
                 super.onFinish();
-//                dismissDialog(DIALOG_DOWNLOAD_PROGRESS);
             }
         });
     }
-
 
     /**
      * Telecharge le premier fichier
      */
     public void loadFirstFileData() {
-        Log.d("STARX", "first file start  ");
         AsyncHttpClient client = new AsyncHttpClient();
         client.get(Constants.DATA_SOURCE_URL, new JsonHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("STARX", "first file success start ");
-
                 try {
                     JSONArray reords = response.getJSONArray("records");
 
@@ -317,14 +367,11 @@ public class MainActivity extends AppCompatActivity {
                     /**
                      * Telecharger et ajouter les dnées dans la bd
                      */
-                    //    downZip(file_url);
+                        downloadDezip(file_url);
 
-                    Log.d("STARX", "first file inserted in the database");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-
-                //Json object is returned as a response
             }
 
             @Override
@@ -363,6 +410,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case REQUEST_EXTERNAL_STORAGE :
+                if (grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    if (DatabaseHelper.getVersions(getApplicationContext()).get(0).equals(Constants.DEFAULT_FIRST_VERSION)){ // premier lancement
+                        loadFirstFileData();
+                    }
+                }else{
+                    Toast.makeText(this,"Permission obligatoire pour charger les données", Toast.LENGTH_LONG).show();
+                }
+                break;
+
+        }
+    }
+
     /**
      * Progresse Bar
      *
@@ -386,211 +449,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Requete du fragment 1
-     */
-    public void fragment1Query() {
-        Cursor cursor = this.getContentResolver().query(Uri.withAppendedPath(AUTHORITY_URI, StarContract.BusRoutes.CONTENT_PATH),
-                null, null, null,
-                StarContract.BusRoutes.BusRouteColumns.ROUTE_ID);
-
-        int i = 0;
-        if (cursor.moveToFirst()) {
-            do {
-                tables.BusRoute item = new tables.BusRoute(
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.ROUTE_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.SHORT_NAME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.LONG_NAME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.DESCRIPTION)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TYPE)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.COLOR)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.BusRoutes.BusRouteColumns.TEXT_COLOR))
-                );
-                i++;
-                Log.d("STARXBR", i + "-Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public void fragment2Query() {
-        String[] selargs = {"0005", "0"};
-        Cursor cursor = this.getContentResolver().query(Uri.withAppendedPath(AUTHORITY_URI, "route_stops"),
-                null, null, selargs,
-                null);
-        Log.d("STARXTEST", " ------------------- Received from provider ..." + cursor.getCount());
-        if (cursor.moveToFirst()) {
-            do {
-                tables.Stop item = new tables.Stop(
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.STOP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.NAME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.DESCRIPTION)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LATITUDE)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LONGITUDE)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.WHEELCHAIR_BOARDING))
-                );
-                Log.d("STARXTEST", " ------------------- Received from provider ..." + item.getName());
-            } while (cursor.moveToNext());
-        }
-
-    }
-
-    /**
-     * Les horaires de passage à un arrêt
-     * en input : id_arret, id_route, date(20180105), heure(21:59:00)
-     * Accès à toutes les colonnes de stop,stoptime,trip,calendar pour chaque ligne
-     */
-    private void fragment3Query() {
-        String[] selargs = {"1258", "0005", "20180105", "21:59:00"};
-        Cursor cursor = getContentResolver().query(Uri.withAppendedPath(AUTHORITY_URI, StarContract.StopTimes.CONTENT_PATH),
-                null, null, selargs,
-                StarContract.Trips.TripColumns.TRIP_ID);
-        if (cursor != null && (cursor.moveToFirst())) {
-            do {
-                tables.StopTime item = new tables.StopTime(
-                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
-                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
-                );
-                Log.d("STARXTEST", "from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public String dateFormat(String date){
-        String [] d = date.split("-");
-        for (int i = 0; i<d.length; i++){
-            Integer in = Integer.valueOf(d[i]);
-            if (in<10){
-                d[i] = "0"+in;
-            }
-        }
-        return d[0]+d[1]+d[2];
-    }
-
-
-    /**
-     * Les horaires de passage d'un trip sur tous les arrêt à partir d'une heure donnée jusqu'au terminus
-     * en input : id_trip, heure(21:59:00)
-     * Accès à toutes les colonnes de stoptime, stop, trip sont disponibles pour chaque ligne
-     */
-    private void fragment4Query() {
-
-        String[] selargs = {"19061", "22:30:00"};
-        Cursor cursor = getContentResolver().query(Uri.withAppendedPath(AUTHORITY_URI, "arrettoterminus"),
-                null, null, selargs,
-                null);
-
-                Log.d("STARXTEST", "from provider ... start");
-        while (cursor.moveToNext()) {
-            tables.StopTime item = new tables.StopTime(
-                    cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
-                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
-                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
-                    cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
-                    cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
-            );
-            Log.d("STARXTEST", "from provider ..." + item);
-        }
-        Log.d("STARXTEST", "from provider ...end");
-    }
-
-    public void testStopsProvider() {
-        Uri stopsUri = Uri.withAppendedPath(AUTHORITY_URI, StarContract.Stops.CONTENT_PATH + "/");
-        Cursor cursor = managedQuery(stopsUri,
-                null, null, null,
-                StarContract.Stops.StopColumns.STOP_ID);
-        if (cursor.moveToFirst()) {
-            do {
-                tables.Stop item = new tables.Stop(
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.STOP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.NAME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.DESCRIPTION)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LATITUDE)),
-                        cursor.getFloat(cursor.getColumnIndex(StarContract.Stops.StopColumns.LONGITUDE)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Stops.StopColumns.WHEELCHAIR_BOARDING))
-                );
-                Log.d("STARXTEST", "Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public void testTripsProvider() {
-        Log.d("STARX", "Test TripsProvider");
-        Uri tripsUri = Uri.withAppendedPath(AUTHORITY_URI, StarContract.Trips.CONTENT_PATH + "");
-        Cursor cursor = managedQuery(tripsUri,
-                null, null, null,
-                StarContract.Trips.TripColumns.ROUTE_ID);
-
-        int i = 0;
-        if (cursor.moveToFirst()) {
-            do {
-                Trip item = new Trip(
-                        cursor.getInt(cursor.getColumnIndex(StarContract.Trips.TripColumns.TRIP_ID)),
-                        cursor.getInt(cursor.getColumnIndex(StarContract.Trips.TripColumns.ROUTE_ID)),
-                        cursor.getInt(cursor.getColumnIndex(StarContract.Trips.TripColumns.SERVICE_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.HEADSIGN)),
-                        cursor.getInt(cursor.getColumnIndex(StarContract.Trips.TripColumns.DIRECTION_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.BLOCK_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Trips.TripColumns.WHEELCHAIR_ACCESSIBLE))
-                );
-                i++;
-                Log.d("STARXTEST", i + "-Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public void testCalendarProvider() {
-        // Retrieve student records
-        Uri calendarUri = Uri.withAppendedPath(AUTHORITY_URI, StarContract.Calendar.CONTENT_PATH + "");
-        Cursor cursor = managedQuery(calendarUri,
-                null, null, null,
-                StarContract.Calendar.CalendarColumns.START_DATE);
-        long count = 0;
-        if (cursor.moveToFirst()) {
-            do {
-                count++;
-                tables.Calendar item = new tables.Calendar(
-                        cursor.getInt(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.SERVICE_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.MONDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.TUESDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.WEDNESDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.THURSDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.FRIDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.SATURDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.SUNDAY)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.START_DATE)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.Calendar.CalendarColumns.END_DATE))
-                );
-                Log.d("STARXCA", count + "-Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-    public void testStopTimesProvider() {
-        Log.d("STARX", "Test StopTimesProvider");
-        Uri tripsUri = Uri.withAppendedPath(AUTHORITY_URI, StarContract.StopTimes.CONTENT_PATH + "");
-        Cursor cursor = getContentResolver().query(tripsUri,
-                null, null, null,
-                StarContract.StopTimes.StopTimeColumns.TRIP_ID);
-        long count = 0;
-        if (cursor != null && (cursor.moveToFirst())) {
-            do {
-                count++;
-                tables.StopTime item = new tables.StopTime(
-                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.TRIP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.ARRIVAL_TIME)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.DEPARTURE_TIME)),
-                        cursor.getInt(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_ID)),
-                        cursor.getString(cursor.getColumnIndex(StarContract.StopTimes.StopTimeColumns.STOP_SEQUENCE))
-                );
-                Log.d("STARXTEST", count + "Received from provider ..." + item);
-            } while (cursor.moveToNext());
-        }
-    }
-
-
     public void getJson2(String url) {
         AsyncHttpClient client = new AsyncHttpClient();
         final ArrayList<String> listResult = new ArrayList<String>();
@@ -611,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
                     listResult.add(object2.get("url").toString());
                     listResult.add(object2.get("id").toString());
 
-                    //   downZip(object2.get("url").toString());
+                    //   downloadDezip(object2.get("url").toString());
 
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -630,8 +488,115 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void updateClick(View view) {
-        Intent intent = new Intent(this, CheckStarDataService.class);
-        startService(intent);
-        Log.d("STARX","Update press ");
+        checkStarVersions();
+    }
+
+    public void checkStarVersions() {
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        TimerTask doAsynchronousTask = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        try {
+                            getVersionsInfos();
+                            attempt++;
+                        } catch (Exception e) {
+                        }
+                    }
+                });
+            }
+        };
+        timer.schedule(doAsynchronousTask, DELAY, PERIOD);
+    }
+
+    private void notifyActivity() {
+
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(getApplicationContext())
+                        .setSmallIcon(R.drawable.ic_launcher_foreground)
+                        .setContentTitle("New data are available")
+                        .setContentText("Update the database");
+
+        Intent resultIntent = new Intent(getApplicationContext(), MainActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(getString(R.string.data1_url_id), DATA_URL1);
+        bundle.putString(getString(R.string.data2_url_id), DATA_URL2);
+        bundle.putString(getString(R.string.data1_date_id), DATA_URL1_LAST_UPDATE);
+        bundle.putString(getString(R.string.data2_date_id), DATA_URL2_LAST_UPDATE);
+        resultIntent.putExtras(bundle);
+
+        // Because clicking the notification opens a new ("special") activity, there's
+        // no need to create an artificial back stack.
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        getApplicationContext(),
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+        mBuilder.setContentIntent(resultPendingIntent);
+
+        // Sets an ID for the notification
+        int mNotificationId = 001;
+        // Gets an instance of the NotificationManager service
+        NotificationManager mNotifyMgr =
+                (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Builds the notification and issues it.
+        mNotifyMgr.notify(mNotificationId, mBuilder.build());
+    }
+
+    /**
+     * connexion to Star Api to get url of zip and id of traject
+     *
+     * @return
+     */
+    public void getVersionsInfos() {
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.get(""+Constants.DATA_SOURCE_URL,
+                new JsonHttpResponseHandler() {
+
+                    @Override
+                    public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                        try {
+                            JSONArray reords = response.getJSONArray("records");
+                            /**
+                             *Traitement du premier fichier
+                             */
+                            JSONObject file1 = (JSONObject) reords.get(0);
+                            JSONObject file12 = (JSONObject) file1.get("fields");
+                            JSONObject fichier1 = (JSONObject) file12.get("fichier");
+                            String last_sync1 = (String) fichier1.get("last_synchronized");
+                            String newData1 = file12.get("url").toString();
+
+                            /**
+                             * Traitement du second fichier
+                             */
+                            JSONObject file2 = (JSONObject) reords.get(1);
+                            JSONObject file22 = (JSONObject) file2.get("fields");
+                            JSONObject fichier2 = (JSONObject) file22.get("fichier");
+                            String last_sync2 = (String) fichier2.get("last_synchronized");
+                            String newData2 = file22.get("url").toString();
+
+                            ArrayList<String> versions = DatabaseHelper.getVersions(getApplicationContext());
+                            if (!(versions.get(0).equals(last_sync1)) || !(versions.get(1).equals(last_sync2))) {
+                                DATA_URL1 = newData1;
+                                DATA_URL2 = newData2;
+                                DATA_URL1_LAST_UPDATE = last_sync1;
+                                DATA_URL2_LAST_UPDATE = last_sync2;
+                                notifyActivity();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    @Override
+                    public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
+                        super.onFailure(statusCode, headers, responseString, throwable);
+                        Log.e("STARX", "==> PROBLEME DE CHARGEMENRT <==");
+                    }
+                });
     }
 }

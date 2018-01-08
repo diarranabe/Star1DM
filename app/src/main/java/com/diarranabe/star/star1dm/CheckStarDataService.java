@@ -30,8 +30,9 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class CheckStarDataService extends Service {
-    private static final long DELAY = 30*1000*60;// Delai avant de lancer le service
-    private static final long PERIOD = 24*60*60*1000; // Intervalle de temps de vérification de nouvelle version
+    private static final long DELAY = 30*1000*60;// Delai avant de lancer le service pour permettre que le premier
+                                                    // soit télechargé et inseré
+    private static final long PERIOD = 60*60*1000; // Intervalle de temps de vérification de nouvelle version
     private long attempt = 0;
     private String DATA_URL1 = "";
     private String DATA_URL2 = "";
@@ -45,6 +46,7 @@ public class CheckStarDataService extends Service {
         checkStarVersions();
         return Service.START_STICKY;
     }
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -65,7 +67,7 @@ public class CheckStarDataService extends Service {
 
                             getVersionsInfos();
 
-                            Log.d("STARX", "My Service ok ! " + attempt);
+                            Log.d("STARX", "Service ok ! " + attempt);
                             attempt++;
                         } catch (Exception e) {
 
@@ -119,22 +121,15 @@ public class CheckStarDataService extends Service {
      * @return
      */
     public void getVersionsInfos() {
-        Log.d("STARX", "version start a0 ");
         AsyncHttpClient client = new AsyncHttpClient();
-        Log.d("STARX", "version start a1 ");
 
         client.get(""+Constants.DATA_SOURCE_URL,
                 new JsonHttpResponseHandler() {
 
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                        Log.d("STARX", "version start X");
-
                         try {
-                            Log.d("STARX", "start new data");
                             JSONArray reords = response.getJSONArray("records");
-
-
                             /**
                              *Traitement du premier fichier
                              */
@@ -143,8 +138,7 @@ public class CheckStarDataService extends Service {
                             JSONObject fichier1 = (JSONObject) file12.get("fichier");
                             String last_sync1 = (String) fichier1.get("last_synchronized");
                             String newData1 = file12.get("url").toString();
-                            Log.d("STARX", "start new data1 -- " + newData1);
-                            
+
                             /**
                              * Traitement du second fichier
                              */
@@ -153,8 +147,6 @@ public class CheckStarDataService extends Service {
                             JSONObject fichier2 = (JSONObject) file22.get("fichier");
                             String last_sync2 = (String) fichier2.get("last_synchronized");
                             String newData2 = file22.get("url").toString();
-                            Log.d("STARX", "start new data2 -- " + newData2);
-
                             ArrayList<String> versions = DatabaseHelper.getVersions(getApplicationContext());
                             if (!(versions.get(0).equals(last_sync1)) || !(versions.get(1).equals(last_sync2))) {
                                 DATA_URL1 = newData1;
@@ -165,7 +157,6 @@ public class CheckStarDataService extends Service {
                                 Log.d("STARX", "new data url1: " + DATA_URL1 + ", date: " + DATA_URL1_LAST_UPDATE);
                                 Log.d("STARX", "new data url1: " + DATA_URL2 + ", date: " + DATA_URL2_LAST_UPDATE);
                             }
-                            Log.d("STARX", "database is up to date ");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }

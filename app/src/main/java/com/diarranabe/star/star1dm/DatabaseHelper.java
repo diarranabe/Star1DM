@@ -108,11 +108,20 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
      * Insert toutes les données disponibles dans le dossier
      */
     public void insertAll() {
-        /*insertStopTimes();
+        insertStopTimes();
         insertCalendars();
         insertBusRoutes();
         insertStops();
-        insertTrips();*/
+        insertTrips();
+
+        /**
+         * Supprime les données après leurs insertion
+         */
+        try {
+            deleteDirectory(new File(DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -465,7 +474,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         Log.d("STARXC", "start loading... " + DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH + DOWNLOAD_PATH + "/" + BUS_ROUTES_CSV_FILE);
         ArrayList<tables.BusRoute> busRoutes = new ArrayList<>();
         FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
-//        FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, INIT_FOLDER_PATH + BUS_ROUTES_CSV_FILE));
         BufferedReader buffer = new BufferedReader(file);
         String line = "";
         int i = 0;
@@ -537,13 +545,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         ArrayList<StopTime> fileStopTimes = new ArrayList<>();
         long items = 0;
         long allStoptimes = 0;
-
-        /**
-         * A décommenter si le gros fichier ne peut pas être traité
-         * Prend plus temps
-         */
-//        int nb_files = splitStopTimesFile();
-//        for (int id=1;id<=nb_files; id++){
         String currfile = INIT_FOLDER_PATH + STOP_TIMES_CSV_FILE;
         Log.d("STARX", "current file ..: " + currfile);
         FileReader file = new FileReader(new File(DEVICE_ROOT_FOLDER, currfile));
@@ -566,17 +567,10 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             items++;
             nb++;
         }
-        Log.d("STARX", fileStopTimes.size() + "- StopTimes inserted ....");
-
         buffer.close();
         file.close();
         allStoptimes += items;
         Log.d("STARXST", items + " stopTimes loaded");
-
-        /**
-         * A décommenter si on l'a fait au dessus
-         */
-//        }
         return fileStopTimes;
     }
 
@@ -646,7 +640,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         }
         return nb_of_files;
     }
-
 
     /**
      * Loads Trip from the csv file
@@ -833,7 +826,6 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         return data;
     }
 
-
     public static ArrayList<String> getVersions(Context context) {
         DatabaseHelper databaseHelper = new DatabaseHelper(context);
         String selectQuery = "SELECT  * FROM " + Constants.VERSIONS_TABLE;
@@ -843,20 +835,17 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
             if (cursor.moveToFirst()) {
                 do {
                     versions.add(cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL)));
-                    Log.d("STARX", "version from db...file: " + cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_NAME_COL)) +
-                            ", ver: " + cursor.getString(cursor.getColumnIndex(Constants.VERSIONS_FILE_VERSION_COL))
-                    );
                 } while (cursor.moveToNext());
             }
             cursor.close();
         } catch (Exception e) {
+            versions.add(Constants.DEFAULT_FIRST_VERSION);
             e.printStackTrace();
         } finally {
-            versions.add("");
+            versions.add(Constants.DEFAULT_FIRST_VERSION);
         }
         return versions;
     }
-
 
     public void updateVersions(Context context, Bundle bundle) {
         if (bundle != null) {
@@ -879,11 +868,31 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                 values2.put(Constants.VERSIONS_FILE_VERSION_COL, date2);
                 database.insert(Constants.VERSIONS_TABLE, null, values);
                 database.insert(Constants.VERSIONS_TABLE, null, values2);
-                Log.d("STARX", " new version : " + msg1 + ", date: " + date1);
-                Log.d("STARX", " new version : " + msg2 + ", date: " + date2);
+            }
+        }
+    }
+
+
+    /**
+     * Supprimer un dossier
+     * @param file
+     * @throws IOException
+     */
+    private static void deleteDirectory(File file) throws IOException {
+
+        for (File childFile : file.listFiles()) {
+
+            if (childFile.isDirectory()) {
+                deleteDirectory(childFile);
+            } else {
+                if (!childFile.delete()) {
+                    throw new IOException();
+                }
             }
         }
 
+        if (!file.delete()) {
+            throw new IOException();
+        }
     }
-
 }

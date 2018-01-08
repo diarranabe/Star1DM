@@ -49,12 +49,12 @@ public class DecompressFast {
                 }
             }
             zin.close();
-            Log.d("XXXXUnzip", "Unzipping complete. path :  " + _location);
+            Log.d("XXXXUnzip", "Dezipping complete. path :  " + _location);
             return true ;
         } catch (Exception e) {
-            Log.e("XXXXDecompress", "unzip", e);
+            Log.e("XXXXDecompress", "dezip", e);
 
-            Log.d("XXXXUnzip", "Unzipping failed");
+            Log.d("XXXXUnzip", "Dezipping failed");
         }
         return false ;
 
