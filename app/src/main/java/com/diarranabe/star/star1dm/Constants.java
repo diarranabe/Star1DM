@@ -14,8 +14,9 @@ public class Constants implements StarContract {
             BusRoutes.BusRouteColumns.COLOR + " TEXT, " +
             BusRoutes.BusRouteColumns.TEXT_COLOR + " TEXT );";
 
+
     public static final String CREATE_TRIPS_TABLE = "CREATE TABLE IF NOT EXISTS " + Trips.CONTENT_PATH +
-            "(" + Trips.TripColumns.TRIP_ID + " INTEGER  NOT NULL PRIMARY KEY," +
+            "(" + StarContract.Trips.TripColumns.TRIP_ID + " INTEGER," +
             Trips.TripColumns.ROUTE_ID + " INTEGER," +
             Trips.TripColumns.SERVICE_ID + " INTEGER," +
             Trips.TripColumns.HEADSIGN + " TEXT," +

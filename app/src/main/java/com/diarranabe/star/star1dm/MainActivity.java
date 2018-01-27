@@ -183,19 +183,25 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("STARX", "success start");
 
                 try {
-
                     //Splitting a File Name from SourceFileName
                     String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
-                    DatabaseHelper.INIT_FOLDER_PATH = "star1dm/" + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
-                    //Saving a File into Download Folder
-                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
                     String INIT_FOLDER_PATH = "star1dm/";
 
+                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
                     File file = new File((DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH));
+
+                    if (! file.exists()){
+                        file.mkdir();
+                    }
+
+                    DatabaseHelper.INIT_FOLDER_PATH = INIT_FOLDER_PATH + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
+                    //Saving a File into Download Folder
+
 
                     File _f = new File(file, DestinationName);
 
                     FileOutputStream output = new FileOutputStream(_f);
+
 
                     Log.e("STARX", "success try");
                     output.write(binaryData);
@@ -278,12 +284,18 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     //Splitting a File Name from SourceFileName
                     String DestinationName = sourceFilname.substring(sourceFilname.lastIndexOf('/') + 1, sourceFilname.length());
-                    DatabaseHelper.INIT_FOLDER_PATH = "star1dm/" + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
-                    //Saving a File into Download Folder
-                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
                     String INIT_FOLDER_PATH = "star1dm/";
 
+                    File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
                     File file = new File((DEVICE_ROOT_FOLDER + "/" + INIT_FOLDER_PATH));
+
+                    if (! file.exists()){
+                        file.mkdir();
+                    }
+
+                    DatabaseHelper.INIT_FOLDER_PATH = INIT_FOLDER_PATH + DestinationName.substring(0, DestinationName.lastIndexOf(".")) + "/";
+                    //Saving a File into Download Folder
+
 
                     File _f = new File(file, DestinationName);
 

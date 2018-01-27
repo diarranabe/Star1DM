@@ -38,7 +38,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
 
     private static File DEVICE_ROOT_FOLDER = getExternalStorageDirectory();
     public SQLiteDatabase database;
-    private static String DATA_NAME = "starBus";
+    private static String DATA_NAME = "starBusDb";
     private static final int DATA_BASE_VERSION = 1;
     /**
      * Paths used to load csv files
