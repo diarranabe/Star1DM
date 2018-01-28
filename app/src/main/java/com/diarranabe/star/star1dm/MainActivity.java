@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -16,6 +17,8 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.loopj.android.http.AsyncHttpClient;
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private String DATA_URL1_LAST_UPDATE = "";
     private String DATA_URL2_LAST_UPDATE = "";
 
+    public static Button button;
     //Absolu path whre file are unZip
     private String exportPath = "";
 
@@ -72,8 +76,23 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
         Log.d("STARX", "start");
 
+        button = (Button)findViewById(R.id.button);
+        new CountDownTimer(CheckStarDataService.DELAY, 1000) {
 
-        Log.d("STARX", "end");
+            public void onTick(long millisUntilFinished) {
+                int hours = (int) millisUntilFinished/(60*60*1000);
+                int diff = (int)millisUntilFinished - hours*(60*60*1000);
+                int min = (int) diff/(60*1000);
+                int sec = (int) (diff - min*60*1000)/1000;
+                button.setText(hours+":"+min+":"+sec);
+            }
+
+            public void onFinish() {
+            }
+        }.start();
+
+
+        Log.d("STARX", "finish");
     }
 
     /**
@@ -82,6 +101,22 @@ public class MainActivity extends AppCompatActivity {
      * @param intent
      */
     public void onNewIntent(Intent intent) {
+
+        new CountDownTimer(CheckStarDataService.PERIOD, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                int hours = (int) millisUntilFinished/(60*60*1000);
+                int diff = (int)millisUntilFinished - hours*(60*60*1000);
+                int min = (int) diff/(60*1000);
+                int sec = (int) (diff - min*60*1000)/1000;
+                button.setTextSize(36);
+                button.setText(hours+":"+min+":"+sec);
+            }
+
+            public void onFinish() {
+            }
+        }.start();
+
         Bundle extras = intent.getExtras();
         if (extras != null) {
             if (extras.containsKey(getString(R.string.data1_url_id))

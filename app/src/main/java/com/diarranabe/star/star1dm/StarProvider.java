@@ -99,8 +99,6 @@ public class StarProvider extends ContentProvider implements StarContract {
                 return cursor;
             case "content://fr.istic.starproviderDM/route_stops":
                 Log.d("STARX","11 curseur ");
-
-//               return getRouteStops(uri, selectionArgs);
                 queryBuilder2 = new SQLiteQueryBuilder();
                 queryBuilder2.setTables(Trips.CONTENT_PATH);
                 queryBuilder2.appendWhere(Trips.TripColumns.ROUTE_ID + " = " + selectionArgs[0]);

@@ -30,10 +30,9 @@ import cz.msebera.android.httpclient.Header;
  */
 
 public class CheckStarDataService extends Service {
-    private static final long DELAY = 30*1000*60;// Delai avant de lancer le service pour permettre que le premier
+    public static final long DELAY = 30*1000*60;// Delai avant de lancer le service pour permettre que le premier
                                                     // soit télechargé et inseré
-    private static final long PERIOD = 60*60*1000; // Intervalle de temps de vérification de nouvelle version
-    private long attempt = 0;
+    public static final long PERIOD = 60*60*1000; // Intervalle de temps de vérification de nouvelle version
     private String DATA_URL1 = "";
     private String DATA_URL2 = "";
     private String DATA_URL1_LAST_UPDATE = "";
@@ -63,12 +62,11 @@ public class CheckStarDataService extends Service {
                 handler.post(new Runnable() {
                     public void run() {
                         try {
-                            Log.d("STARX", "check start");
+                            Log.d("STARX", "check versions start");
 
                             getVersionsInfos();
 
-                            Log.d("STARX", "Service ok ! " + attempt);
-                            attempt++;
+                            Log.d("STARX", "Service ok ! ");
                         } catch (Exception e) {
 
                         }
@@ -113,6 +111,9 @@ public class CheckStarDataService extends Service {
                 (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         // Builds the notification and issues it.
         mNotifyMgr.notify(mNotificationId, mBuilder.build());
+
+        MainActivity.button.setTextSize(18);
+        MainActivity.button.setText("Ouvrez la notification pour mettre les données à jour");
     }
 
     /**
