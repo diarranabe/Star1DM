@@ -65,15 +65,15 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
         db.execSQL(Constants.CREATE_STOPS_TABLE);
         db.execSQL(Constants.CREATE_TRIPS_TABLE);
         db.execSQL(Constants.CREATE_VERSIONS_TABLE);
-        /**
-         * Initialisation des versions
+        /*
+          Initialisation des versions
          */
         ContentValues values = new ContentValues();
         ContentValues values2 = new ContentValues();
         values.put(Constants.VERSIONS_FILE_NAME_COL, "file1");
         values2.put(Constants.VERSIONS_FILE_NAME_COL, "file2");
         values.put(Constants.VERSIONS_FILE_VERSION_COL, Constants.DEFAULT_FIRST_VERSION);
-        values2.put(Constants.VERSIONS_FILE_VERSION_COL, "0002");
+        values2.put(Constants.VERSIONS_FILE_VERSION_COL, Constants.DEFAULT_FIRST_VERSION);
         db.insert(Constants.VERSIONS_TABLE, null, values);
         db.insert(Constants.VERSIONS_TABLE, null, values2);
         Log.d("STARX", "db cretaed");
@@ -92,7 +92,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
     }
 
     public List<String> allTableNames() {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String selectQuery = "select name from sqlite_master where type = 'table'";
         Cursor cursor = this.getReadableDatabase().rawQuery(selectQuery, null);
         if (cursor.moveToFirst()) {
@@ -866,6 +866,7 @@ public class DatabaseHelper extends SQLiteOpenHelper implements StarContract {
                 values2.put(Constants.VERSIONS_FILE_NAME_COL, msg2);
                 values.put(Constants.VERSIONS_FILE_VERSION_COL, date1);
                 values2.put(Constants.VERSIONS_FILE_VERSION_COL, date2);
+                database.execSQL(Constants.CREATE_VERSIONS_TABLE);
                 database.insert(Constants.VERSIONS_TABLE, null, values);
                 database.insert(Constants.VERSIONS_TABLE, null, values2);
             }
